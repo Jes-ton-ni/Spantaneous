@@ -823,10 +823,10 @@ const Admin = () => {
           throw new Error('Selected booking not found');
         }
 
-        console.log('Selected Booking:', selectedBooking); // Log selected booking for debugging
+        //console.log('Selected Booking:', selectedBooking); // Log selected booking for debugging
 
         const serviceCategory = selectedBooking.category; // Assign category to a variable for easier debugging
-        console.log('Service Category:', serviceCategory); // Log service category for debugging
+        //console.log('Service Category:', serviceCategory); // Log service category for debugging
 
         const response = await fetch('http://localhost:5000/assigned-employees', {
           method: 'POST',

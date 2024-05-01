@@ -422,7 +422,7 @@ app.put('/appointments/:appointmentId/request-status', (req, res) => {
   // Execute the SQL query
   connection.query(sql, [request_status, appointmentId], (err, results) => {
     if (err) {
-      console.error('Error updating request status:', err);
+      //console.error('Error updating request status:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
     // Check if the appointment was found and updated
@@ -454,7 +454,7 @@ app.put('/appointments/:appointmentId/payment-status', (req, res) => {
   // Execute the SQL query
   connection.query(sql, [payment_status, appointmentId], (err, results) => {
     if (err) {
-      console.error('Error updating payment status:', err);
+      //console.error('Error updating payment status:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
     // Check if the appointment was found and updated
