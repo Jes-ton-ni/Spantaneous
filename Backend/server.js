@@ -298,15 +298,8 @@ app.get('/appointments', (req, res) => {
       services.service_name AS service,
       appointments.date_appointed,
       appointments.message,
-      appointments.price_final,
-      appointments.assign_status,
-      CONCAT(
-        UPPER(SUBSTRING(employee.Fname, 1, 1)),
-        LOWER(SUBSTRING(employee.Fname, 2)),
-        ' ',
-        UPPER(SUBSTRING(employee.Lname, 1, 1)),
-        LOWER(SUBSTRING(employee.Lname, 2))
-      ) as assignedEmployee,
+      services.price AS price_final,
+      appointments.request_status,
       appointments.appointment_status,
       appointments.payment_status
     FROM 
@@ -315,8 +308,6 @@ app.get('/appointments', (req, res) => {
       users ON appointments.customer_id = users.user_id
     INNER JOIN 
       services ON appointments.service_booked = services.service_id
-    INNER JOIN
-      employee ON appointments.employee_id = employee.employee_id
     ORDER BY appointments.payment_status
   `;
   
@@ -328,6 +319,38 @@ app.get('/appointments', (req, res) => {
     }
     // Send the list of appointments as the response
     return res.json({ success: true, appointments: results });
+  });
+});
+
+// Endpoint to update request status of appointments
+app.put('/appointments/:appointmentId', (req, res) => {
+  const { appointmentId } = req.params;
+  const { request_status } = req.body;
+
+  // Validate input
+  if (typeof request_status !== 'number') {
+    return res.status(400).json({ success: false, message: 'Invalid request status' });
+  }
+
+  // SQL query to update request status
+  const sql = `
+    UPDATE appointments
+    SET request_status = ?
+    WHERE appointment_id = ?
+  `;
+
+  // Execute the SQL query
+  connection.query(sql, [request_status, appointmentId], (err, results) => {
+    if (err) {
+      console.error('Error updating request status:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Check if the appointment was found and updated
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+    // Send success response
+    return res.json({ success: true, message: 'Request status updated successfully' });
   });
 });
 

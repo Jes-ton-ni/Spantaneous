@@ -738,9 +738,9 @@ const Admin = () => {
     const [bookings, setBookings] = useState([]);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [employees, setEmployees] = useState([]); // State to store employees 
-    const [selectedEmployees, setSelectedEmployees] = useState([]);
-    const [showModal, setShowModal] = useState(false);    
-    const [appointmentHistory, setAppointmentHistory] = useState([]);
+    const [showModal, setShowModal] = useState(false);  
+    const [pendingAppointment, setPendingAppointment] = useState([]);
+    const [appointmentAccepted, setAppointmentAccepted] = useState([]);
   
   
     useEffect(() => {
@@ -769,11 +769,6 @@ const Admin = () => {
       };
     }, []);
   
-    const handleAssign = (bookingId) => {
-      setSelectedBookingId(bookingId);
-      setShowModal(true);
-    };
-
     // Function to fetch employees data from the /employees endpoint
     const fetchEmployees = async () => {
       try {
@@ -789,17 +784,30 @@ const Admin = () => {
       }
     };
   
-    const handleCancel = (bookingId) => {
-      setBookings(bookings.filter(booking => booking.appointment_id !== bookingId));
+    const handleAccept = (bookingId) => {
+      setSelectedBookingId(bookingId);
+      setShowModal(true);
     };
-  
-    const handleEmployeeSelection = (employeeId) => {
-      // Toggle employee selection
-      const isSelected = selectedEmployees.includes(employeeId);
-      if (isSelected) {
-        setSelectedEmployees(selectedEmployees.filter(id => id !== employeeId));
-      } else {
-        setSelectedEmployees([...selectedEmployees, employeeId]);
+
+    const handleDeclined = async (bookingId) => {
+      try {
+        // Make a PUT request to update the request status to 3 (declined)
+        const response = await fetch(`http://localhost:5000/appointments/${bookingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ request_status: 2 }), // Assuming "request_status" is the field name
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update request status');
+        }
+
+        // Remove the declined booking from the local state
+        setPendingAppointment(pendingAppointment.filter(booking => booking.appointment_id !== bookingId));
+      } catch (error) {
+        console.error('Error declining appointment:', error);
       }
     };
 
@@ -808,22 +816,17 @@ const Admin = () => {
       fetchEmployees();
     }, []); 
 
-    const handleCreateAppointment = () => {
-      // Create appointment logic here
-      // For now, just move the selected booking to history
-      const selectedBooking = bookings.find(booking => booking.id === selectedBookingId);
-      // Update assigned employee for the selected booking
-      const updatedBooking = { ...selectedBooking, assignedEmployee: 'Employee ' + selectedEmployees.join(', '), accepted: false };
-      setAppointmentHistory([...appointmentHistory, updatedBooking]);
-      // Remove the selected booking from current bookings
-      setBookings(bookings.filter(booking => booking.id !== selectedBookingId));
-      // Close the modal
+    //assign the appointment to the employee
+    const handleAssign = () => {
+      
       setShowModal(false);
     };
 
     useEffect(() => {
-      const assignedAppointment = bookings.filter(booking => booking.assign_status === 1);
-      setAppointmentHistory(assignedAppointment);
+      const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
+      const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
+      setPendingAppointment(pendingAppointment);
+      setAppointmentAccepted(acceptedAppointment);
     }, [bookings]);
 
     function capitalizeEachWord(str) {
@@ -834,10 +837,10 @@ const Admin = () => {
   
     return (
       <div className="p-8 container mx-auto">
-        <h2 className="text-4xl font-bold mb-8 text-gray-800">Appointments</h2>
+        <h2 className="text-4xl font-bold mb-8 text-gray-800">Pending Appointments</h2>
         <div className="overflow-y-auto max-h-[600px]">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {bookings.map((booking) => (
+            {pendingAppointment.map((booking) => (
               <div key={booking.appointment_id} className="bg-white rounded-md shadow-md p-6">
                 <p className="text-lg font-semibold mb-4">Name: {booking.name}</p>
                 <p className="text-gray-700 mb-2">Email: {booking.email}</p>
@@ -849,15 +852,15 @@ const Admin = () => {
                 <div className="flex gap-4">
                   <button
                     className="bg-dark hover:bg-dark/90 text-white font-bold py-2 px-4 rounded-full mt-4 mr-2"
-                    onClick={() => handleAssign(booking.appointment_id)}
+                    onClick={() => handleAccept(booking.appointment_id)}
                   >
-                    Assign
+                    Accept
                   </button>
                   <button
                     className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full mt-4"
-                    onClick={() => handleCancel(booking.appointment_id)}
+                    onClick={() => handleDeclined(booking.appointment_id)}
                   >
-                    Cancel
+                    Declined
                   </button>
                 </div>
               </div>
@@ -874,7 +877,7 @@ const Admin = () => {
                     <th className="p-2">Employee ID</th>
                     <th className="p-2">Name</th>
                     <th className="p-2">Availability</th>
-                    <th className="p-2">Select</th>
+                    <th className="p-2"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -884,11 +887,12 @@ const Admin = () => {
                     <td className="p-2">{capitalizeEachWord(employee.Fname) + " " + capitalizeEachWord(employee.Lname)}</td>
                     <td className="p-2">Available</td>
                     <td className="p-2 text-center">
-                      <input
-                        type="checkbox"
-                        onChange={() => handleEmployeeSelection(employee.employee_id)} // Pass the employee_id to the handleEmployeeSelection function
-                        checked={selectedEmployees.includes(employee.employee_id)} // Check if the employee_id is included in selectedEmployees array
-                      />
+                      <button
+                        className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-4"
+                        onClick={handleAssign}
+                      >
+                        Assign
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -901,18 +905,13 @@ const Admin = () => {
                 >
                   Close
                 </button>
-                <button
-                  className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-4"
-                  onClick={handleCreateAppointment}
-                >
-                  Create Appointment
-                </button>
+                
               </div>
             </div>
           </div>
         )}
         <div className="mt-8">
-          <h2 className="text-3xl font-bold mb-6 text-gray-800">Appointment History</h2>
+          <h2 className="text-3xl font-bold mb-6 text-gray-800">Confirmed Appointment</h2>
           <div className="overflow-auto max-h-[300px]">
             <table className="table-auto w-full">
               <thead>
@@ -923,12 +922,12 @@ const Admin = () => {
                   <th className="px-4 py-2">Service</th>
                   <th className="px-4 py-2">Date</th>
                   <th className="px-4 py-2">Time</th>
-                  <th className="px-4 py-2">Assigned Employee</th>
                   <th className="px-4 py-2">Accepted</th>
+                  <th className="px-4 py-2">Assigned Employee</th>                  
                 </tr>
               </thead>
               <tbody className='text-center'>
-                {appointmentHistory.map((appointment) => (
+                {appointmentAccepted.map((appointment) => (
                   <tr key={appointment.appointment_id}>
                     <td className="border px-4 py-2">{appointment.name}</td>
                     <td className="border px-4 py-2">{appointment.email}</td>
@@ -936,10 +935,10 @@ const Admin = () => {
                     <td className="border px-4 py-2">{appointment.service}</td>
                     <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleDateString()}</td>
                     <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleTimeString()}</td>
-                    <td className="border px-4 py-2">{appointment.assignedEmployee}</td>
                     <td className="border px-4 py-2">
                       {appointment.appointment_status ? 'Accepted' : 'Pending'}
                     </td>
+                    <td className="border px-4 py-2">{appointment.assignedEmployee}</td>                    
                   </tr>
                 ))}
               </tbody>
