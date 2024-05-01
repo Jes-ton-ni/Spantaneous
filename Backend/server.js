@@ -32,7 +32,6 @@ app.post('/login', (req, res) => {
   });
 });
 
-
 // Endpoint for user signup
 app.post('/signup', (req, res) => {
   const { username, password, firstName, lastName, phone, email } = req.body; // Updated field names
@@ -287,11 +286,20 @@ app.get('/appointments', (req, res) => {
     SELECT 
       appointments.appointment_id,
       users.username,
+      CONCAT(
+        UPPER(SUBSTRING(users.Fname, 1, 1)),
+        LOWER(SUBSTRING(users.Fname, 2)),
+        ' ',
+        UPPER(SUBSTRING(users.Lname, 1, 1)),
+        LOWER(SUBSTRING(users.Lname, 2))
+      ) AS name,
       users.email,
       users.contact,
       services.service_name AS service,
       appointments.date_appointed,
-      appointments.message
+      appointments.message,
+      appointments.price_final,
+      appointments.payment_status
     FROM 
       appointments
     INNER JOIN 

@@ -257,18 +257,23 @@ const Admin = () => {
     
     // Function to filter users based on search query
     const filteredClients = clients.filter(client =>
-      (client.Fname?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (client.Lname?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (client.email?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (client.phone?.includes(searchQuery) || '')
+      (client.Fname + ' ' + client.Lname).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      client.phone?.includes(searchQuery)
     );
 
+
     const filteredEmployees = employees.filter(employee =>
-      (employee.Fname?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (employee.Lname?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (employee.email?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
-      (employee.phone?.includes(searchQuery) || '')
+      (employee.Fname + ' ' + employee.Lname).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      employee.phone?.includes(searchQuery)
     );
+
+    function capitalizeEachWord(str) {
+      return str.replace(/\b\w/g, function (char) {
+        return char.toUpperCase();
+      });
+    }    
 
     return (
       <main className="container mx-auto h-screen">
@@ -318,7 +323,7 @@ const Admin = () => {
                       return (
                         <tr key={`client_${client.user_id}`} className="hover:bg-gray-100">
                           <td className="p-2">{client.user_id}</td>
-                          <td className="p-2">{client.Fname + " " + client.Lname}</td>
+                          <td className="p-2">{capitalizeEachWord(client.Fname) + " " + capitalizeEachWord(client.Lname)}</td>
                           <td className="p-2">{client.email}</td>
                           <td className="p-2">{client.contact}</td>
                           <td className="p-2">
@@ -348,7 +353,7 @@ const Admin = () => {
                     {filteredEmployees.map(employee => (
                       <tr key={`employee_${employee.employee_id}`} className="hover:bg-gray-100">
                         <td className="p-2">{employee.employee_id}</td>
-                        <td className="p-2">{employee.Fname + " " + employee.Lname}</td>
+                        <td className="p-2">{capitalizeEachWord(employee.Fname) + " " + capitalizeEachWord(employee.Lname)}</td>
                         <td className="p-2">{employee.email}</td>
                         <td className="p-2">{employee.phone}</td>
                         <td className="p-2">
@@ -698,15 +703,18 @@ const Admin = () => {
                   placeholder="Price"
                   className="px-4 py-2 border rounded mr-2"
                 />
-                <input
-                  type="text"
+                <select
                   name="category"
                   defaultValue={selectedService.category}
-                  value={selectedService.update_category} // Make sure to use the correct property name
+                  value={selectedService.update_category}
                   onChange={handleUpdateChange}
-                  placeholder="Category"
                   className="px-4 py-2 border rounded mr-2"
-                />
+                >
+                  <option value="Massage">Massage</option>
+                  <option value="Facial">Facial</option>
+                  <option value="Nail Treatment">Nail Treatment</option>
+                  <option value="Body Treatment">Body Treatment</option>
+                </select>
                 <input
                   type="file"
                   id="imageInput"
@@ -785,7 +793,7 @@ const Admin = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {bookings.map((booking) => (
               <div key={booking.appointment_id} className="bg-white rounded-md shadow-md p-6">
-                <p className="text-lg font-semibold mb-4">Name: {booking.username}</p>
+                <p className="text-lg font-semibold mb-4">Name: {booking.name}</p>
                 <p className="text-gray-700 mb-2">Email: {booking.email}</p>
                 <p className="text-gray-700 mb-2">Phone: {booking.contact}</p>
                 <p className="text-gray-700 mb-2">Service: {booking.service}</p>
@@ -864,47 +872,33 @@ const Admin = () => {
   
   const CustomerManagementContent = () => {
     // Sample data for customer overview
-    const [customers, setCustomers] = useState([
-      {
-        id: 1,
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "+1234567890",
-        paid: false,
-        totalAmountToPay: 50,  // Assuming a total amount of $50 for John Doe
-        service: "Massage" // Sample service booked by John Doe
-      },
-      {
-        id: 2,
-        name: "Jane Smith",
-        email: "jane@example.com",
-        phone: "+1987654321",
-        paid: false,
-        totalAmountToPay: 60,  // Assuming a total amount of $60 for Jane Smith
-        service: "Facial" // Sample service booked by Jane Smith
-      },
-      {
-        id: 3,
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "+1234567890",
-        paid: false,
-        totalAmountToPay: 50,  // Assuming a total amount of $50 for John Doe
-        service: "Massage" // Sample service booked by John Doe
-      },
+    const [customers, setCustomers] = useState([]);
 
-      {
-        id: 4,
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "+1234567890",
-        paid: false,
-        totalAmountToPay: 50,  // Assuming a total amount of $50 for John Doe
-        service: "Massage" // Sample service booked by John Doe
-      },
-      
-      // Add more sample customer data as needed
-    ]);
+    useEffect(() => {
+      // Define a function to fetch appointments from the server
+      const fetchCustomers = async () => {
+        try {
+          // Make a GET request to the /appointments endpoint
+          const response = await fetch('http://localhost:5000/appointments');
+          if (!response.ok) {
+            throw new Error('Failed to fetch customers');
+          }
+          const data = await response.json();
+          // Update the bookings state with the fetched appointments
+          setCustomers(data.appointments);
+        } catch (error) {
+          console.error('Error fetching appointments:', error);
+        }
+      };
+  
+      // Call the fetchAppointments function when the component mounts
+      fetchCustomers();
+  
+      // Clean-up function (optional)
+      return () => {
+        // Perform any clean-up if needed
+      };
+    }, []);
   
     // State to manage the history of paid customers
     const [paidCustomersHistory, setPaidCustomersHistory] = useState([]);
@@ -933,8 +927,9 @@ const Admin = () => {
             <div key={customer.id} className="bg-white rounded-md shadow-md p-6">
               <h3 className="text-xl font-semibold mb-4">{customer.name}</h3>
               <p className="text-gray-700 mb-2">Email: {customer.email}</p>
-              <p className="text-gray-700 mb-2">Phone: {customer.phone}</p>
+              <p className="text-gray-700 mb-2">Phone: {customer.contact}</p>
               <p className="text-gray-700 mb-2">Service: {customer.service}</p>
+              <p className="text-gray-700 mb-2">Total Amount to Pay: PHP{customer.price_final.toFixed(2)}</p>
               <p className="text-gray-700 mb-2">Paid: {customer.paid ? 'Yes' : 'No'}</p>
               {!customer.paid && (
                 <button
@@ -947,7 +942,7 @@ const Admin = () => {
                   Mark as Paid
                 </button>
               )}
-              <p className="text-gray-700 mb-2">Total Amount to Pay: ${customer.totalAmountToPay.toFixed(2)}</p>
+             
             </div>
           ))}
         </div>
@@ -969,9 +964,9 @@ const Admin = () => {
                 <tr key={customer.id}>
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.email}</td>
-                  <td className="border px-4 py-2">{customer.phone}</td>
+                  <td className="border px-4 py-2">{customer.contact}</td>
                   <td className="border px-4 py-2">{customer.service}</td>
-                  <td className="border px-4 py-2">${customer.totalAmountToPay.toFixed(2)}</td>
+                  <td className="border px-4 py-2">PHP{customer.price_final.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
