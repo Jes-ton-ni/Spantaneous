@@ -107,8 +107,7 @@ const Login = () => {
   
   return (
     <main>
-      <section className="flex justify-center items-center h-screen bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }}>
-        <div className="">
+      <section className="flex justify-center items-center min-h-screen bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }}>
           <div className="w-full max-w-lg ">
             <a href="/" className="mb-8 flex justify-center m-[5rem]">
               <img className=' rounded-xl' src={Logo} alt="Logo" width={250} />
@@ -160,19 +159,10 @@ const Login = () => {
               </form>
             )}
             {activeTab === 'signup' && (
-              <form onSubmit={handleSignupSubmit} className="bg-light shadow-md rounded px-8 pt-6 pb-8 ">
+              <form onSubmit={handleSignupSubmit} className="bg-light shadow-md rounded px-8 pt-6 pb-8 mb-4 ">
                 <h2 className="text-xl mb-4 font-bold">Signup</h2>
-                <div className="mb-4">
-                  <label htmlFor="signup-Username" className="block text-gray-700 text-sm font-bold mb-2">Username:</label>
-                  <input
-                    type="text"
-                    id="signup-username"
-                    value={signupUsername}
-                    onChange={(e) => setSignupUsername(e.target.value)}
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    required
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               
                 <div className="mb-4">
                   <label htmlFor="signup-firstname" className="block text-gray-700 text-sm font-bold mb-2">First Name:</label>
                   <input
@@ -191,6 +181,18 @@ const Login = () => {
                     id="signup-lastname"
                     value={signupLastName}
                     onChange={(e) => setSignupLastName(e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required
+                  />
+                </div>
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="signup-Username" className="block text-gray-700 text-sm font-bold mb-2">Username:</label>
+                  <input
+                    type="text"
+                    id="signup-username"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value)}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -235,7 +237,6 @@ const Login = () => {
               </form>
             )}
           </div>
-        </div>
       </section>
     </main>
   );
