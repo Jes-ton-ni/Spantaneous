@@ -296,6 +296,7 @@ app.get('/appointments', (req, res) => {
       users.email,
       users.contact,
       services.service_name AS service,
+      services.category,
       appointments.date_appointed,
       appointments.message,
       services.price AS price_final,
@@ -322,8 +323,87 @@ app.get('/appointments', (req, res) => {
   });
 });
 
-// Endpoint to update request status of appointments
-app.put('/appointments/:appointmentId', (req, res) => {
+// Endpoint to fetch assignedEmployee
+app.get('/assigned_employee', (req, res) => {
+  // SQL query to join appointments, users, and services tables to get relevant data
+  const sql = `
+    SELECT 
+      appointments.appointment_id,
+      users.username,
+      CONCAT(
+        UPPER(SUBSTRING(users.Fname, 1, 1)),
+        LOWER(SUBSTRING(users.Fname, 2)),
+        ' ',
+        UPPER(SUBSTRING(users.Lname, 1, 1)),
+        LOWER(SUBSTRING(users.Lname, 2))
+      ) AS name,
+      users.email,
+      users.contact,
+      services.service_name AS service,
+      appointments.date_appointed,
+      appointments.request_status,
+      CONCAT(
+        UPPER(SUBSTRING(employee.Fname, 1, 1)),
+        LOWER(SUBSTRING(employee.Fname, 2)),
+        ' ',
+        UPPER(SUBSTRING(employee.Lname, 1, 1)),
+        LOWER(SUBSTRING(employee.Lname, 2))
+      ) AS assignedEmployee
+    FROM 
+      appointments
+    INNER JOIN 
+      users ON appointments.customer_id = users.user_id
+    INNER JOIN 
+      services ON appointments.service_booked = services.service_id
+    INNER JOIN
+      assigned_employee ON appointments.appointment_id = assigned_employee.appointment_id
+    INNER JOIN
+      employee ON assigned_employee.employee_id = employee.employee_id
+    ORDER BY appointments.payment_status
+  `;
+
+  
+  // Execute the SQL query
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error executing SQL query:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Send the list of appointments as the response
+    return res.json({ success: true, appointments: results });
+  });
+});
+
+// Endpoint to handle POST requests for assigning employees
+app.post('/assigned-employees', (req, res) => {
+  // Extract data from the request body
+  const { employee_id, appointment_id, service_category, status } = req.body;
+
+  // SQL query to insert data into the assigned_employee table
+  const sql = `
+    INSERT INTO assigned_employee (employee_id, appointment_id, service_category, status)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  // Execute the SQL query
+  connection.query(sql, [employee_id, appointment_id, service_category, status], (err, results) => {
+    if (err) {
+      console.error('Error assigning employee:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Check if the assignment was successful
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Employee assignment failed' });
+    }
+    // Send success response
+
+    return res.json({ success: true, message: 'Employee assigned successfully' });
+  });
+});
+ 
+
+// Endpoint to set request status of appointments to 3 for declined appointment
+app.put('/appointments/:appointmentId/request-status', (req, res) => {
   const { appointmentId } = req.params;
   const { request_status } = req.body;
 
@@ -355,7 +435,7 @@ app.put('/appointments/:appointmentId', (req, res) => {
 });
 
 // Endpoint to update payment status of appointments
-app.put('/appointments/:appointmentId', (req, res) => {
+app.put('/appointments/:appointmentId/payment-status', (req, res) => {
   const { appointmentId } = req.params;
   const { payment_status } = req.body;
 

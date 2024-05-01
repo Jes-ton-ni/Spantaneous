@@ -742,33 +742,51 @@ const Admin = () => {
     const [pendingAppointment, setPendingAppointment] = useState([]);
     const [appointmentAccepted, setAppointmentAccepted] = useState([]);
   
-  
-    useEffect(() => {
-      // Define a function to fetch appointments from the server
-      const fetchAppointments = async () => {
-        try {
-          // Make a GET request to the /appointments endpoint
-          const response = await fetch('http://localhost:5000/appointments');
-          if (!response.ok) {
-            throw new Error('Failed to fetch appointments');
-          }
-          const data = await response.json();
-          // Update the bookings state with the fetched appointments
-          setBookings(data.appointments);
-        } catch (error) {
-          console.error('Error fetching appointments:', error);
+     // Define a function to fetch appointments from the server
+    const fetchAppointments = async () => {
+      try {
+        // Make a GET request to the /appointments endpoint
+        const response = await fetch('http://localhost:5000/appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
         }
-      };
-  
-      // Call the fetchAppointments function when the component mounts
+        const data = await response.json();
+        // Update the bookings state with the fetched appointments
+        setBookings(data.appointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    // Call the fetchAppointments function when the component mounts
+    useEffect(() => {
       fetchAppointments();
-  
-      // Clean-up function (optional)
       return () => {
-        // Perform any clean-up if needed
       };
     }, []);
-  
+
+    // Function to fetch employees data from the /employees endpoint
+    const fetchAssignedEmployee = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/assigned_employee');
+        const data = await response.json();
+        if (response.ok) {
+          setAppointmentAccepted(data.appointments);
+        } else {
+          console.error('Error fetching employees:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    };
+
+     // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchAssignedEmployee();
+      return () => {
+      };
+    }, []); 
+   
     // Function to fetch employees data from the /employees endpoint
     const fetchEmployees = async () => {
       try {
@@ -783,16 +801,83 @@ const Admin = () => {
         console.error('Error fetching employees:', error);
       }
     };
-  
+
+    // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchEmployees();
+      return () => {
+      };  
+    }, []); 
+   
     const handleAccept = (bookingId) => {
       setSelectedBookingId(bookingId);
       setShowModal(true);
     };
 
+    //assign the appointment to the employee
+    const handleAssign = async (employeeId, bookingId) => {
+      try {
+        // Find the selected booking using its ID
+        const selectedBooking = bookings.find(booking => booking.appointment_id === bookingId);
+        if (!selectedBooking) {
+          throw new Error('Selected booking not found');
+        }
+
+        console.log('Selected Booking:', selectedBooking); // Log selected booking for debugging
+
+        const serviceCategory = selectedBooking.category; // Assign category to a variable for easier debugging
+        console.log('Service Category:', serviceCategory); // Log service category for debugging
+
+        const response = await fetch('http://localhost:5000/assigned-employees', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employee_id: employeeId,
+            appointment_id: bookingId,
+            service_category: serviceCategory, 
+            status: 1, 
+          }),
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to assign employee');
+        }
+
+        try {
+          // Make a PUT request to update the request status to 3 (declined)
+          const response = await fetch(`http://localhost:5000/appointments/${bookingId}/request-status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ request_status: 1 }), // Assuming "request_status" is the field name
+          });
+  
+          if (!response.ok) {
+            throw new Error('Failed to update request status');
+          }
+  
+          // Remove the declined booking from the local state
+          setPendingAppointment(pendingAppointment.filter(booking => booking.appointment_id !== bookingId));
+        } catch (error) {
+          console.error('Error declining appointment:', error);
+        }
+    
+      } catch (error) {
+        console.error('Error assigning employee:', error);
+      }
+      
+      // Add the selected booking to the appointmentAccepted state
+      fetchAssignedEmployee();
+      setShowModal(false);
+    };    
+
     const handleDeclined = async (bookingId) => {
       try {
         // Make a PUT request to update the request status to 3 (declined)
-        const response = await fetch(`http://localhost:5000/appointments/${bookingId}`, {
+        const response = await fetch(`http://localhost:5000/appointments/${bookingId}/request-status`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -811,22 +896,11 @@ const Admin = () => {
       }
     };
 
-    // useEffect hook to fetch data when the component mounts
-    useEffect(() => {
-      fetchEmployees();
-    }, []); 
-
-    //assign the appointment to the employee
-    const handleAssign = () => {
-      
-      setShowModal(false);
-    };
-
     useEffect(() => {
       const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
-      const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
+      //const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
       setPendingAppointment(pendingAppointment);
-      setAppointmentAccepted(acceptedAppointment);
+     // setAppointmentAccepted(acceptedAppointment);
     }, [bookings]);
 
     function capitalizeEachWord(str) {
@@ -889,7 +963,7 @@ const Admin = () => {
                     <td className="p-2 text-center">
                       <button
                         className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-4"
-                        onClick={handleAssign}
+                        onClick={() => handleAssign(employee.employee_id, selectedBookingId)}
                       >
                         Assign
                       </button>
@@ -936,7 +1010,7 @@ const Admin = () => {
                     <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleDateString()}</td>
                     <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleTimeString()}</td>
                     <td className="border px-4 py-2">
-                      {appointment.appointment_status ? 'Accepted' : 'Pending'}
+                      {appointment.request_status ? 'Accepted' : 'Pending'}
                     </td>
                     <td className="border px-4 py-2">{appointment.assignedEmployee}</td>                    
                   </tr>
@@ -982,7 +1056,7 @@ const Admin = () => {
 
     //useEffects to populate Customer Overview for accepted appointment
     useEffect(() => {
-      const acceptedApp = customers.filter(customer => customer.appointment_status === 1);
+      const acceptedApp = customers.filter(customer => customer.request_status === 1);
       setAcceptedAppointment(acceptedApp);
     }, [customers]);
 
@@ -996,7 +1070,7 @@ const Admin = () => {
     const togglePaidStatus = async (appointmentId) => {
       try {
         // Make a PUT request to update the payment status of the customer
-        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}`, {
+        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/payment-status`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -1030,10 +1104,10 @@ const Admin = () => {
               <p className="text-gray-700 mb-2">Email: {customer.email}</p>
               <p className="text-gray-700 mb-2">Phone: {customer.contact}</p>
               <p className="text-gray-700 mb-2">Service: {customer.service}</p>
+              <p className="text-gray-700 mb-2">Appointment Status: {customer.appointment_status ? 'Done' : 'Ongoing'}</p>
               <p className="text-gray-700 mb-2">
                 Total Amount to Pay: PHP{customer.price_final ? customer.price_final.toFixed(2) : 'N/A'}
               </p>
-
               <p className="text-gray-700 mb-2">Paid: {customer.payment_status ? 'Yes' : 'No'}</p>
               {!customer.payment_status && (
                 <button
