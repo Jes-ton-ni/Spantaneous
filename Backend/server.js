@@ -306,6 +306,7 @@ app.get('/appointments', (req, res) => {
       users ON appointments.customer_id = users.user_id
     INNER JOIN 
       services ON appointments.service_booked = services.service_id
+    ORDER BY appointments.payment_status
   `;
   
   // Execute the SQL query
@@ -316,6 +317,38 @@ app.get('/appointments', (req, res) => {
     }
     // Send the list of appointments as the response
     return res.json({ success: true, appointments: results });
+  });
+});
+
+// Endpoint to update payment status of appointments
+app.put('/appointments/:appointmentId', (req, res) => {
+  const { appointmentId } = req.params;
+  const { payment_status } = req.body;
+
+  // Validate input
+  if (typeof payment_status !== 'boolean') {
+    return res.status(400).json({ success: false, message: 'Invalid payment status' });
+  }
+
+  // SQL query to update payment status
+  const sql = `
+    UPDATE appointments
+    SET payment_status = ?
+    WHERE appointment_id = ?
+  `;
+
+  // Execute the SQL query
+  connection.query(sql, [payment_status, appointmentId], (err, results) => {
+    if (err) {
+      console.error('Error updating payment status:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Check if the appointment was found and updated
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+    // Send success response
+    return res.json({ success: true, message: 'Payment status updated successfully' });
   });
 });
 

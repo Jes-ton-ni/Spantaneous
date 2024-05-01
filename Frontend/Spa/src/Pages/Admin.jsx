@@ -873,7 +873,7 @@ const Admin = () => {
   const CustomerManagementContent = () => {
     // Sample data for customer overview
     const [customers, setCustomers] = useState([]);
-
+    const [paidCustomersHistory, setPaidCustomersHistory] = useState([]);
     useEffect(() => {
       // Define a function to fetch appointments from the server
       const fetchCustomers = async () => {
@@ -890,53 +890,70 @@ const Admin = () => {
           console.error('Error fetching appointments:', error);
         }
       };
-  
+
       // Call the fetchAppointments function when the component mounts
       fetchCustomers();
-  
+
       // Clean-up function (optional)
       return () => {
         // Perform any clean-up if needed
       };
     }, []);
-  
-    // State to manage the history of paid customers
-    const [paidCustomersHistory, setPaidCustomersHistory] = useState([]);
-  
+
+    // useEffect to populate paidCustomersHistory with customers where payment_status is 1
+    useEffect(() => {
+      const paidCustomers = customers.filter(customer => customer.payment_status === 1);
+      setPaidCustomersHistory(paidCustomers);
+    }, [customers]);
+
     // Function to toggle the paid status of a customer
-    const togglePaidStatus = (customerId) => {
-      setCustomers(customers =>
-        customers.map(customer =>
-          customer.id === customerId ? { ...customer, paid: !customer.paid } : customer
-        )
-      );
+    const togglePaidStatus = async (appointmentId) => {
+      try {
+        // Make a PUT request to update the payment status of the customer
+        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ payment_status: !customers.find(customer => customer.appointment_id === appointmentId).payment_status }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update payment status');
+        }
+
+        // Fetch the updated list of customers after updating the payment status
+        const updatedData = await fetch('http://localhost:5000/appointments');
+        if (!updatedData.ok) {
+          throw new Error('Failed to fetch updated customers');
+        }
+        const updatedCustomersData = await updatedData.json();
+        setCustomers(updatedCustomersData.appointments);
+      } catch (error) {
+        console.error('Error toggling paid status:', error);
+      }
     };
-  
-    // Function to move a customer to the history section
-    const moveToHistory = (customerId) => {
-      const paidCustomer = customers.find(customer => customer.id === customerId);
-      setPaidCustomersHistory([...paidCustomersHistory, paidCustomer]);
-      setCustomers(customers.filter(customer => customer.id !== customerId));
-    };
-  
+
     return (
       <div className="container mx-auto p-8">
         <h2 className="text-3xl font-bold mb-6 text-gray-800">Customer Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto max-h-96">
           {customers.map((customer) => (
-            <div key={customer.id} className="bg-white rounded-md shadow-md p-6">
+            <div key={customer.appointment_id} className="bg-white rounded-md shadow-md p-6">
               <h3 className="text-xl font-semibold mb-4">{customer.name}</h3>
               <p className="text-gray-700 mb-2">Email: {customer.email}</p>
               <p className="text-gray-700 mb-2">Phone: {customer.contact}</p>
               <p className="text-gray-700 mb-2">Service: {customer.service}</p>
-              <p className="text-gray-700 mb-2">Total Amount to Pay: PHP{customer.price_final.toFixed(2)}</p>
-              <p className="text-gray-700 mb-2">Paid: {customer.paid ? 'Yes' : 'No'}</p>
-              {!customer.paid && (
+              <p className="text-gray-700 mb-2">
+                Total Amount to Pay: PHP{customer.price_final ? customer.price_final.toFixed(2) : 'N/A'}
+              </p>
+
+              <p className="text-gray-700 mb-2">Paid: {customer.payment_status ? 'Yes' : 'No'}</p>
+              {!customer.payment_status && (
                 <button
                   className="bg-dark hover:bg-dark/90 duration-300 text-white rounded-md px-4 py-2 mr-2"
                   onClick={() => {
-                    togglePaidStatus(customer.id);
-                    moveToHistory(customer.id);
+                    togglePaidStatus(customer.appointment_id);
                   }}
                 >
                   Mark as Paid
@@ -961,7 +978,7 @@ const Admin = () => {
             </thead>
             <tbody className='text-center'>
               {paidCustomersHistory.map((customer) => (
-                <tr key={customer.id}>
+                <tr key={customer.appointment_id}>
                   <td className="border px-4 py-2">{customer.name}</td>
                   <td className="border px-4 py-2">{customer.email}</td>
                   <td className="border px-4 py-2">{customer.contact}</td>
