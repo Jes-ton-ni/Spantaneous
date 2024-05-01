@@ -299,6 +299,15 @@ app.get('/appointments', (req, res) => {
       appointments.date_appointed,
       appointments.message,
       appointments.price_final,
+      appointments.assign_status,
+      CONCAT(
+        UPPER(SUBSTRING(employee.Fname, 1, 1)),
+        LOWER(SUBSTRING(employee.Fname, 2)),
+        ' ',
+        UPPER(SUBSTRING(employee.Lname, 1, 1)),
+        LOWER(SUBSTRING(employee.Lname, 2))
+      ) as assignedEmployee,
+      appointments.appointment_status,
       appointments.payment_status
     FROM 
       appointments
@@ -306,6 +315,8 @@ app.get('/appointments', (req, res) => {
       users ON appointments.customer_id = users.user_id
     INNER JOIN 
       services ON appointments.service_booked = services.service_id
+    INNER JOIN
+      employee ON appointments.employee_id = employee.employee_id
     ORDER BY appointments.payment_status
   `;
   

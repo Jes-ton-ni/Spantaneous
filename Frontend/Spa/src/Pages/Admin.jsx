@@ -736,6 +736,12 @@ const Admin = () => {
 
   const BookingContent = () => {
     const [bookings, setBookings] = useState([]);
+    const [selectedBookingId, setSelectedBookingId] = useState(null);
+    const [employees, setEmployees] = useState([]); // State to store employees 
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
+    const [showModal, setShowModal] = useState(false);    
+    const [appointmentHistory, setAppointmentHistory] = useState([]);
+  
   
     useEffect(() => {
       // Define a function to fetch appointments from the server
@@ -763,13 +769,24 @@ const Admin = () => {
       };
     }, []);
   
-    const [selectedBookingId, setSelectedBookingId] = useState(null);
-    const [selectedEmployees, setSelectedEmployees] = useState([]);
-    const [showModal, setShowModal] = useState(false);
-  
     const handleAssign = (bookingId) => {
       setSelectedBookingId(bookingId);
       setShowModal(true);
+    };
+
+    // Function to fetch employees data from the /employees endpoint
+    const fetchEmployees = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/employees');
+        const data = await response.json();
+        if (response.ok) {
+          setEmployees(data.users);
+        } else {
+          console.error('Error fetching employees:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
     };
   
     const handleCancel = (bookingId) => {
@@ -785,6 +802,35 @@ const Admin = () => {
         setSelectedEmployees([...selectedEmployees, employeeId]);
       }
     };
+
+    // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchEmployees();
+    }, []); 
+
+    const handleCreateAppointment = () => {
+      // Create appointment logic here
+      // For now, just move the selected booking to history
+      const selectedBooking = bookings.find(booking => booking.id === selectedBookingId);
+      // Update assigned employee for the selected booking
+      const updatedBooking = { ...selectedBooking, assignedEmployee: 'Employee ' + selectedEmployees.join(', '), accepted: false };
+      setAppointmentHistory([...appointmentHistory, updatedBooking]);
+      // Remove the selected booking from current bookings
+      setBookings(bookings.filter(booking => booking.id !== selectedBookingId));
+      // Close the modal
+      setShowModal(false);
+    };
+
+    useEffect(() => {
+      const assignedAppointment = bookings.filter(booking => booking.assign_status === 1);
+      setAppointmentHistory(assignedAppointment);
+    }, [bookings]);
+
+    function capitalizeEachWord(str) {
+      return str.replace(/\b\w/g, function (char) {
+        return char.toUpperCase();
+      });
+    }    
   
     return (
       <div className="p-8 container mx-auto">
@@ -822,7 +868,6 @@ const Admin = () => {
           <div className="fixed inset-0 flex justify-center items-center">
             <div className="bg-white p-8 rounded-md shadow-md">
               <h3 className="text-lg font-semibold mb-4 text-center">Choose employee(s):</h3>
-              {/* Sample employee table */}
               <table className="border-collapse w-full mb-4">
                 <thead>
                   <tr className="border-b">
@@ -833,19 +878,20 @@ const Admin = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="p-2 text-center">1</td>
-                    <td className="p-2">Employee 1</td>
+                {employees.map(employee => (
+                  <tr key={employee.employee_id}>
+                    <td className="p-2">{employee.employee_id}</td>
+                    <td className="p-2">{capitalizeEachWord(employee.Fname) + " " + capitalizeEachWord(employee.Lname)}</td>
                     <td className="p-2">Available</td>
                     <td className="p-2 text-center">
                       <input
                         type="checkbox"
-                        onChange={() => handleEmployeeSelection(1)}
-                        checked={selectedEmployees.includes(1)}
+                        onChange={() => handleEmployeeSelection(employee.employee_id)} // Pass the employee_id to the handleEmployeeSelection function
+                        checked={selectedEmployees.includes(employee.employee_id)} // Check if the employee_id is included in selectedEmployees array
                       />
                     </td>
                   </tr>
-                  {/* Add more employees as needed */}
+                ))}
                 </tbody>
               </table>
               <div className="flex justify-between">
@@ -857,7 +903,7 @@ const Admin = () => {
                 </button>
                 <button
                   className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-4"
-                  onClick={() => setShowModal(false)} // Replace with your create appointment logic
+                  onClick={handleCreateAppointment}
                 >
                   Create Appointment
                 </button>
@@ -865,14 +911,49 @@ const Admin = () => {
             </div>
           </div>
         )}
+        <div className="mt-8">
+          <h2 className="text-3xl font-bold mb-6 text-gray-800">Appointment History</h2>
+          <div className="overflow-auto max-h-[300px]">
+            <table className="table-auto w-full">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Email</th>
+                  <th className="px-4 py-2">Phone</th>
+                  <th className="px-4 py-2">Service</th>
+                  <th className="px-4 py-2">Date</th>
+                  <th className="px-4 py-2">Time</th>
+                  <th className="px-4 py-2">Assigned Employee</th>
+                  <th className="px-4 py-2">Accepted</th>
+                </tr>
+              </thead>
+              <tbody className='text-center'>
+                {appointmentHistory.map((appointment) => (
+                  <tr key={appointment.appointment_id}>
+                    <td className="border px-4 py-2">{appointment.name}</td>
+                    <td className="border px-4 py-2">{appointment.email}</td>
+                    <td className="border px-4 py-2">{appointment.contact}</td>
+                    <td className="border px-4 py-2">{appointment.service}</td>
+                    <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleDateString()}</td>
+                    <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleTimeString()}</td>
+                    <td className="border px-4 py-2">{appointment.assignedEmployee}</td>
+                    <td className="border px-4 py-2">
+                      {appointment.appointment_status ? 'Accepted' : 'Pending'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     );
   };
   
-  
   const CustomerManagementContent = () => {
     // Sample data for customer overview
     const [customers, setCustomers] = useState([]);
+    const [acceptedAppointment, setAcceptedAppointment] = useState([]);
     const [paidCustomersHistory, setPaidCustomersHistory] = useState([]);
     useEffect(() => {
       // Define a function to fetch appointments from the server
@@ -899,6 +980,12 @@ const Admin = () => {
         // Perform any clean-up if needed
       };
     }, []);
+
+    //useEffects to populate Customer Overview for accepted appointment
+    useEffect(() => {
+      const acceptedApp = customers.filter(customer => customer.appointment_status === 1);
+      setAcceptedAppointment(acceptedApp);
+    }, [customers]);
 
     // useEffect to populate paidCustomersHistory with customers where payment_status is 1
     useEffect(() => {
@@ -938,7 +1025,7 @@ const Admin = () => {
       <div className="container mx-auto p-8">
         <h2 className="text-3xl font-bold mb-6 text-gray-800">Customer Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto max-h-96">
-          {customers.map((customer) => (
+          {acceptedAppointment.map((customer) => (
             <div key={customer.appointment_id} className="bg-white rounded-md shadow-md p-6">
               <h3 className="text-xl font-semibold mb-4">{customer.name}</h3>
               <p className="text-gray-700 mb-2">Email: {customer.email}</p>
@@ -1047,8 +1134,6 @@ const Admin = () => {
     </div>
   );
 };
-
-  
   // Function to render content based on active tab...
   
   const renderContent = () => {
