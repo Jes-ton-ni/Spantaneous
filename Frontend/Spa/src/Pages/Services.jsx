@@ -1,10 +1,49 @@
-// import { useState } from 'react';
+
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { HiOutlineArrowUp } from 'react-icons/hi'; 
+import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav';
 import bg from '../assets/img/back.jpg';
 import Footer from '../sections/Footer';
 import Swal from 'sweetalert2';
 import React, { useState, useEffect } from 'react';
+
+const ScrollToTopButton = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.pageYOffset > 400) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+
+    return () => {
+      window.removeEventListener('scroll', toggleVisibility);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    scroll.scrollToTop({
+      duration: 500, 
+    });
+  };
+
+  return (
+    <button
+    className={`fixed right-4 bottom-12 z-50 bg-dark hover:bg-light-dark text-white rounded-xl p-3 ${isVisible ? 'opacity-100 transition-opacity duration-300 animate-bounce' : 'opacity-0 transition-opacity duration-300'}`}
+    onClick={scrollToTop}
+  >
+    <HiOutlineArrowUp className="w-5 h-12" />
+  </button>
+  
+  );
+};
+
 
 const Services = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -108,6 +147,7 @@ const Services = () => {
       <section>
         <Footer />
       </section>
+      <ScrollToTopButton />
     </main>
     
   );
