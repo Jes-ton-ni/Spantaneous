@@ -30,7 +30,7 @@ const Services = () => {
         <div className="border-2 border-dark mt-1 w-[10rem] mb-9"></div>
       </div>
 
-      <div className="flex justify-center gap-[12rem] mt-9 flex-wrap ">
+      <div className="flex justify-center gap-[7rem] mt-9 flex-wrap ">
         <ServiceTab title="Massage" image={img1} onClick={() => handleServiceSelect({ title: 'Massage', description: 'Relax and rejuvenate with our professional massage therapy. Our experienced therapists will help you relieve stress and tension, leaving you feeling refreshed and revitalized.', image: bg1 })} />
         <ServiceTab title="Facial" image={img2} onClick={() => handleServiceSelect({ title: 'Facial', description: 'Indulge in our range of facial treatments designed to nourish and revitalize your skin. From deep cleansing to hydration, our facials will leave your skin glowing and radiant.', image: bg2 })} />
         <ServiceTab title="Nail Treatment" image={img3} onClick={() => handleServiceSelect({ title: 'Nail Treatment', description: 'Pamper yourself with our professional nail treatments. From manicures to pedicures, our skilled technicians will keep your nails healthy and beautiful.', image: bg3 })} />
