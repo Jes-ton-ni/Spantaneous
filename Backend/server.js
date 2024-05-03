@@ -224,6 +224,7 @@ app.put('/services/:id', upload.single('image'), (req, res) => {
 });
 
 const fs = require('fs');
+const { connect } = require('http2');
 
 // Endpoint for deleting a service by ID
 app.delete('/services/:id', (req, res) => {
@@ -481,6 +482,42 @@ app.post('/bookings', (req, res) => {
     }
     return res.json({ success: true, message: 'Appointment booked successfully' });
   });
+});
+
+// End point for getting the list of the staffs with their taks
+app.get('/staffs', (req, res) => {
+  // SQL query to select all the users from the emplyoee and the task done in the assigned_emmployee table
+  const sql = `
+    SELECT 
+      e.employee_id AS employee_id,
+      CONCAT(
+          UPPER(SUBSTRING(e.Fname, 1, 1)),
+          LOWER(SUBSTRING(e.Fname, 2)),
+          ' ',
+          UPPER(SUBSTRING(e.Lname, 1, 1)),
+          LOWER(SUBSTRING(e.Lname, 2))
+      ) AS name,
+      ae.service_category AS task,
+      SUM(ae.status = 1) AS completedTasks
+    FROM
+      employee e
+    INNER JOIN
+      assigned_employee ae ON e.employee_id = ae.employee_id
+    GROUP BY
+      employee_id,
+      name,
+      task
+    `;
+
+    // Execute the SQL query
+    connection.query(sql, (err, results) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error'});
+      }
+      // Send the list of the staffs with their task done as the response
+      return res.json({ success: true, staffs: results})
+    });  
 });
 
 

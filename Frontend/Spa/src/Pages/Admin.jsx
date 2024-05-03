@@ -837,7 +837,7 @@ const Admin = () => {
             employee_id: employeeId,
             appointment_id: bookingId,
             service_category: serviceCategory, 
-            status: 1, 
+            status: 0, 
           }),
         });
     
@@ -1028,27 +1028,26 @@ const Admin = () => {
     const [customers, setCustomers] = useState([]);
     const [acceptedAppointment, setAcceptedAppointment] = useState([]);
     const [paidCustomersHistory, setPaidCustomersHistory] = useState([]);
-    useEffect(() => {
-      // Define a function to fetch appointments from the server
-      const fetchCustomers = async () => {
-        try {
-          // Make a GET request to the /appointments endpoint
-          const response = await fetch('http://localhost:5000/appointments');
-          if (!response.ok) {
-            throw new Error('Failed to fetch customers');
-          }
-          const data = await response.json();
-          // Update the bookings state with the fetched appointments
-          setCustomers(data.appointments);
-        } catch (error) {
-          console.error('Error fetching appointments:', error);
+    
+    // Define a function to fetch appointments from the server
+    const fetchCustomers = async () => {
+      try {
+        // Make a GET request to the /appointments endpoint
+        const response = await fetch('http://localhost:5000/appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch customers');
         }
-      };
+        const data = await response.json();
+        // Update the bookings state with the fetched appointments
+        setCustomers(data.appointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
 
+    useEffect(() => {
       // Call the fetchAppointments function when the component mounts
       fetchCustomers();
-
-      // Clean-up function (optional)
       return () => {
         // Perform any clean-up if needed
       };
@@ -1152,54 +1151,81 @@ const Admin = () => {
       </div>
     );
   };
-  
 
  const StaffManagementContent = () => {
-  const [staffMembers] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      tasks: ["Massage"], //dito once na tig mark as completed ng emplyee  yung task niya mawawala yan na "task 1" tas once na wala dadagdag jan sa completed task na 1 task na ang natapos
-      completedTasks: 0 // New property to track completed tasks
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      tasks: ["Facial"],
-      completedTasks: 0 // New property to track completed tasks
-    },
-    {
-      id: 3,
-      name: "Ben",
-      tasks: ["Facial"],
-      completedTasks: 0 // New property to track completed tasks
-    },
-    {
-      id: 4,
-      name: "Johnsud",
-      tasks: ["Facial"],
-      completedTasks: 0 // New property to track completed tasks
-    },
-    // Add more sample staff data as needed
-  ]);
+  const [staffMembers, setStaffMembers] = useState([]);
+
+  // Define a function to fetch the staff from the Employee from the server
+  const fetchStaffs = async () => {
+    try {
+      // Make a GET request to the /employee endpoint
+      const response = await fetch('http://localhost:5000/staffs');
+      if (!response.ok) {
+        throw new Error('Failed to fetch staffs');
+      }
+      const data = await response.json();
+      // Update the staffs state with the fetched employee
+      setStaffMembers(data.staffs);
+    } catch (error) {
+      console.error('Error fetching staffs:', error);
+    }
+  };
+
+  useEffect(()  => {
+    // Call the fetchEmployees function when the component mounts
+    fetchStaffs();
+    return () => {
+      //perform any clean-up if needed
+    };
+  }, []);
+
+  // Function to compile tasks for each staff member
+  const compileTasks = (staffMembers) => {
+    const compiledTasks = {};
+    staffMembers.forEach((staff) => {
+      const { name, task, completedTasks } = staff;
+      if (!compiledTasks[name]) {
+        compiledTasks[name] = { name, tasks: [{ task, completedTasks }] };
+      } else {
+        compiledTasks[name].tasks.push({ task, completedTasks });
+      }
+    });
+    return Object.values(compiledTasks);
+  };
 
   return (
     <div className="container mx-auto p-8">
       <h2 className="text-3xl font-bold mb-6 text-gray-800">Staff Overview</h2>
       <div className="overflow-auto max-h-96">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {staffMembers.map((staff) => (
-            <div key={staff.id} className="bg-white rounded-md shadow-md p-6">
+          {compileTasks(staffMembers).map((staff, index) => (
+            <div key={index} className="bg-white rounded-md shadow-md p-6">
               <h3 className="text-xl font-semibold mb-4">{staff.name}</h3>
               <div className="mb-2">
-                <p className="text-gray-700 mb-1">Assigned Tasks:</p>
-                <ul className="list-disc pl-5">
-                  {staff.tasks.map((task, index) => (
-                    <li key={index} className="text-gray-700">{task}</li>
-                  ))}
-                </ul>
+                <table className="table-auto w-full">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-2">Assigned Tasks</th>
+                      <th className="px-4 py-2">Completed Tasks</th>
+                    </tr>
+                  </thead>
+                  <tbody className='text-center'>
+                    {staff.tasks.map((task, index) => (
+                      <tr key={index}>
+                        <td className="border px-4 py-2">{task.task}</td>
+                        <td className="border px-4 py-2">{task.completedTasks}</td>
+                      </tr>
+                    ))}
+                    {/* Total row */}
+                    <tr>
+                      <td className="border px-4 py-2 font-semibold">Total</td>
+                      <td className="border px-4 py-2 font-semibold">
+                        {staff.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <p className="text-gray-700">Completed Tasks: {staff.completedTasks}</p>
             </div>
           ))}
         </div>
