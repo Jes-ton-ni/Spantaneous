@@ -75,11 +75,11 @@ const Admin = () => {
     const compileTasks = (employeePerformance) => {
       const compiledTasks = {};
       employeePerformance.forEach((staff) => {
-        const { name, task, completedTasks } = staff;
+        const { name, task, completedTasks, pendingTasks } = staff;
         if (!compiledTasks[name]) {
-          compiledTasks[name] = { name, tasks: [{ task, completedTasks }] };
+          compiledTasks[name] = { name, tasks: [{ task, completedTasks, pendingTasks }] };
         } else {
-          compiledTasks[name].tasks.push({ task, completedTasks });
+          compiledTasks[name].tasks.push({ task, completedTasks, pendingTasks });
         }
       });
       return Object.values(compiledTasks);
@@ -137,6 +137,7 @@ const Admin = () => {
             {compileTasks(employeePerformance).map((employee, index) => (
               <div key={index} className="bg-white rounded-md shadow-md p-6">
                 <h4 className="text-xl font-semibold mb-2">{employee.name}</h4>
+                <p className="text-gray-700 mb-2">Pending Task: {employee.tasks.reduce((total, task) => total + parseInt(task.pendingTasks), 0)}</p>
                 <p className="text-gray-700 mb-2">Tasks Completed: {employee.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}</p>
                 {/* Add more performance metrics if needed */}
               </div>
@@ -1201,14 +1202,14 @@ const Admin = () => {
   }, []);
 
   // Function to compile tasks for each staff member
-  const compileTasks = (staffMembers) => {
+  const compileTasks = (employeePerformance) => {
     const compiledTasks = {};
-    staffMembers.forEach((staff) => {
-      const { name, task, completedTasks } = staff;
+    employeePerformance.forEach((staff) => {
+      const { name, task, completedTasks, pendingTasks } = staff;
       if (!compiledTasks[name]) {
-        compiledTasks[name] = { name, tasks: [{ task, completedTasks }] };
+        compiledTasks[name] = { name, tasks: [{ task, completedTasks, pendingTasks }] };
       } else {
-        compiledTasks[name].tasks.push({ task, completedTasks });
+        compiledTasks[name].tasks.push({ task, completedTasks, pendingTasks });
       }
     });
     return Object.values(compiledTasks);

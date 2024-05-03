@@ -498,7 +498,8 @@ app.get('/staffs', (req, res) => {
           LOWER(SUBSTRING(e.Lname, 2))
       ) AS name,
       ae.service_category AS task,
-      SUM(ae.status = 1) AS completedTasks
+      SUM(ae.status = 1) AS completedTasks,
+      SUM(ae.status = 0) AS pendingTasks
     FROM
       employee e
     INNER JOIN
