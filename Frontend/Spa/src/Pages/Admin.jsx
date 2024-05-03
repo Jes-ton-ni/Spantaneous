@@ -30,8 +30,7 @@ const Admin = () => {
       setAppointmentAvailability(appointmentData.appointmentAvailability);
   
       // Fetch data for employee performance
-      const employeeData = await fetchEmployeeData();
-      setEmployeePerformance(employeeData.employeePerformance);
+      fetchEmployeeData();
     };
   
     // Mock functions for fetching data (replace with actual API calls)
@@ -53,16 +52,38 @@ const Admin = () => {
     };
   
     const fetchEmployeeData = async () => {
-      // Example data fetching logic for employee performance
-      return {
-        employeePerformance: [{ id: 1, name: 'John Doe', tasksCompleted: 10 }, { id: 2, name: 'Jane Smith', tasksCompleted: 8 }],
-      };
+      try {
+        // Make a GET request to the /employee endpoint
+        const response = await fetch('http://localhost:5000/staffs');
+        if (!response.ok) {
+          throw new Error('Failed to fetch staffs');
+        }
+        const data = await response.json();
+        // Update the staffs state with the fetched employee
+        setEmployeePerformance(data.staffs);
+      } catch (error) {
+        console.error('Error fetching staffs:', error);
+      }
     };
   
     // Trigger data fetching on component mount
     useEffect(() => {
       fetchData();
     }, []);
+
+    // Function to compile tasks for each staff member
+    const compileTasks = (employeePerformance) => {
+      const compiledTasks = {};
+      employeePerformance.forEach((staff) => {
+        const { name, task, completedTasks } = staff;
+        if (!compiledTasks[name]) {
+          compiledTasks[name] = { name, tasks: [{ task, completedTasks }] };
+        } else {
+          compiledTasks[name].tasks.push({ task, completedTasks });
+        }
+      });
+      return Object.values(compiledTasks);
+    };
   
     return (
       <div className="container mx-auto p-8">
@@ -113,10 +134,10 @@ const Admin = () => {
         <div className="bg-white rounded-md shadow-md p-6 mt-6">
           <h3 className="text-lg font-semibold mb-4">Employee Performance</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {employeePerformance.map((employee) => (
-              <div key={employee.id} className="bg-white rounded-md shadow-md p-6">
+            {compileTasks(employeePerformance).map((employee, index) => (
+              <div key={index} className="bg-white rounded-md shadow-md p-6">
                 <h4 className="text-xl font-semibold mb-2">{employee.name}</h4>
-                <p className="text-gray-700 mb-2">Tasks Completed: {employee.tasksCompleted}</p>
+                <p className="text-gray-700 mb-2">Tasks Completed: {employee.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}</p>
                 {/* Add more performance metrics if needed */}
               </div>
             ))}
