@@ -6,78 +6,231 @@ const Employee = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const Profile = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [address, setAddress] = useState('');
+    // Sample employee information
+    const [formData, setFormData] = useState({
+      firstName: "thennek",
+      lastName: "alepse",
+      username: "alepse12",
+      email: "alepse@gmail.com",
+      contact: "123-456-7890",
+      currentPassword: "",
+      newPassword: "",
+      confirmNewPassword: ""
+    });
+  
+    const [showModal, setShowModal] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [alertMessage, setAlertMessage] = useState("");
+  
+    const toggleModal = () => setShowModal(!showModal);
+    const togglePasswordModal = () => setShowPasswordModal(!showPasswordModal);
+  
+    const handleChange = (e) => {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value
+      });
+    };
   
     const handleSubmit = (e) => {
       e.preventDefault();
-      // Here you can implement logic to update employee information
-      console.log('Form submitted:', { name, email, phone, address });
+      // Logic to update profile information
+      console.log("Profile updated:", formData);
+      setAlertMessage("Profile updated successfully!");
+      toggleModal();
+      setTimeout(() => {
+        setAlertMessage("");
+      }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
+    };
+  
+    const handlePasswordChange = (e) => {
+      e.preventDefault();
+      // Logic to change password
+      console.log("Password changed:", formData.newPassword);
+      setAlertMessage("Password changed successfully!");
+      togglePasswordModal();
+      setTimeout(() => {
+        setAlertMessage("");
+      }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
     };
   
     return (
-      <div className="mx-auto max-w-md p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-3xl font-semibold mb-6 text-center text-dark">Update Profile</h2>
-        <form onSubmit={handleSubmit} className="space-y-9 p-2">
-          <div >
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm  sm:text-sm p-2"
-              placeholder="Enter your name"
-            />
+      
+      <div className="border-light-dark p-4 lg:p-8 bg-white border-2 rounded-lg shadow-md  ">
+        {alertMessage && (
+          <div className="mb-4 bg-green-500 text-white py-2 px-4 rounded-md">
+            {alertMessage}
           </div>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-smsm:text-sm p-2"
-              placeholder="Enter your email"
-            />
+        )}
+        <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {formData.firstName}!</h2>
+        <div className="mb-4 space-y-2">
+          <h2 className="text-2xl font-palanquin font-bold">Profile Information:</h2>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {formData.firstName}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {formData.lastName}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {formData.username}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {formData.email}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {formData.contact}</p>
+          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={toggleModal}>Update Profile</button>
+        </div>
+        <div className="mb-4 space-y-2">
+          <h2 className="text-2xl font-palanquin font-bold">Password and Security:</h2>
+          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={togglePasswordModal}>Change Password</button>
+        </div>
+  
+        {showModal && (
+          <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
+            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+              <div className="modal-content py-4 text-left px-6">
+                <div className="flex justify-between items-center pb-3">
+                  <p className="text-2xl font-semibold">Update Profile</p>
+                  <button className="modal-close" onClick={toggleModal}>
+                    <span className="text-3xl">&times;</span>
+                  </button>
+                </div>
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName">
+                      First Name
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="firstName"
+                      type="text"
+                      name="firstName"
+                      placeholder="First Name"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="lastName">
+                      Last Name
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="lastName"
+                      type="text"
+                      name="lastName"
+                      placeholder="Last Name"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+                      Username
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="username"
+                      type="text"
+                      name="username"
+                      placeholder="Username"
+                      value={formData.username}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+                      Email
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="email"
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      value={formData.email}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="contact">
+                      Contact
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="contact"
+                      type="text"
+                      name="contact"
+                      placeholder="Contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                      onClick={toggleModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-            <input
-              type="tel"
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm  sm:text-sm p-2"
-              placeholder="Enter your phone number"
-            />
+        )}
+  
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
+            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+              <div className="modal-content py-4 text-left px-6">
+                <div className="flex justify-between items-center pb-3">
+                  <p className="text-2xl font-semibold">Change Password</p>
+                  <button className="modal-close" onClick={togglePasswordModal}>
+                    <span className="text-3xl">&times;</span>
+                  </button>
+                </div>
+                <form onSubmit={handlePasswordChange}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currentPassword">
+                      Current Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="currentPassword"
+                      type="password"
+                      name="currentPassword"
+                      placeholder="Current Password"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  {/* Add other fields here */}
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                      onClick={togglePasswordModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-dark hover:bg-light-dark duration-300 text-white font-bold py-2 px-4 rounded"
+                    >
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </div>
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">Address</label>
-            <textarea
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm resize-none h-24"
-              placeholder="Enter your address"
-            ></textarea>
-          </div>
-          <div>
-            <button
-              type="submit"
-              className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-dark hover:bg-light-dark "
-            >
-              Update Profile
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     );
   };
   
-
   const Appointment = () => {
     const appointments = [
       {
@@ -116,13 +269,14 @@ const Employee = () => {
         time: '2:00 PM',
         message: 'No specific requests.'
       },
+      
     ];
   
     return (
       <div className='container mx-auto'>
         <h2 className='text-4xl font-semibold text-center mb-9'>Appointments</h2>
         <div className='flex items-center justify-center'>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-screen overflow-y-auto">
             {appointments.map((appointment, index) => (
               <div key={index} className="p-4 border rounded-lg shadow-md bg-light">
                 <h3 className="text-lg font-bold mb-2">Appointment {index + 1}</h3>
