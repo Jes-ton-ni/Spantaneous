@@ -6,6 +6,33 @@ const Admin = () => {
   // State to track active tab
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const togglePasswordModal = () => setShowPasswordModal(!showPasswordModal);
+   
+  const [formData, setFormData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: ""
+  });
+  
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handlePasswordChange = (e) => {
+    e.preventDefault();
+    // Logic to change password
+    console.log("Password changed:", formData.newPassword);
+    setAlertMessage("Password changed successfully!");
+    togglePasswordModal();
+    setTimeout(() => {
+      setAlertMessage("");
+    }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
+  };
   // Content components
   const DashboardContent = () => {
     // State variables for KPIs
@@ -1401,12 +1428,67 @@ const Admin = () => {
         {/* Content Header */}
         <header className="bg-light flex justify-end items-center px-4 py-2 border-b border-dark">
           <h1 className="text-xl font-bold text-dark m-4">Admin Dashboard</h1>
+          <button  className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300 mr-2" onClick={togglePasswordModal}>
+            Change  password
+          </button>
           <button  className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300" onClick={Logout}>
             Logout
           </button>
         </header>
+        {alertMessage && (
+          <div className="mb-4 bg-green-500 text-white py-2 px-4 ">
+            {alertMessage}
+          </div>
+        )}
         {/* Page Content */}
         <div className="p-6">{renderContent()}</div>
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
+            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+              <div className="modal-content py-4 text-left px-6">
+                <div className="flex justify-between items-center pb-3">
+                  <p className="text-2xl font-semibold">Change Password</p>
+                  <button className="modal-close" onClick={togglePasswordModal}>
+                    <span className="text-3xl">&times;</span>
+                  </button>
+                </div>
+                <form onSubmit={handlePasswordChange}>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currentPassword">
+                      Current Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="currentPassword"
+                      type="password"
+                      name="currentPassword"
+                      placeholder="Current Password"
+                      value={formData.currentPassword}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  {/* Add other fields here */}
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
+                      onClick={togglePasswordModal}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-dark hover:bg-light-dark duration-300 text-white font-bold py-2 px-4 rounded"
+                    >
+                      Change Password
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
