@@ -340,7 +340,7 @@ const Admin = () => {
               value={activeTab}
               onChange={(e) => setActiveTab(e.target.value)}
             >
-              <option value="clients">Clients</option>
+              <option value="clients">Users</option>
               <option value="employees">Employees</option>
             </select>
             {/* Search input */}

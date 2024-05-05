@@ -3,9 +3,18 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const session = require('express-session'); // npm install express-session
+const MySQLStore = require('express-mysql-session')(session); // npm install express-mysql-session
+const bcrypt = require('bcrypt'); //install bcrypt using this commant 'npm install bcrypt'
 
 const app = express();
-app.use(cors());
+// app.use(cors());
+// Enable CORS with credentials
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json()); // Parse JSON bodies
 
 const connection = mysql.createConnection({
@@ -15,42 +24,174 @@ const connection = mysql.createConnection({
   database: 'spantaneous'
 });
 
+// Error handling for database connection
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to database:', err);
+    return;
+  }
+  console.log('Connected to database');
+});
+
+
+// MySQL session store configuration
+const sessionStore = new MySQLStore({
+  database: 'spantaneous',
+  table: 'sessions',
+  host: 'localhost',
+  user: 'root',
+  password: '0511',
+  expiration: 86400000, // Session expiration time in milliseconds
+  createDatabaseTable: true, // Automatically create sessions table if not exists
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  }
+}, connection);
+
+// Log session store configuration
+console.log('Session store configuration:', sessionStore.options);
+
+// Error handling for session store initialization
+sessionStore.on('error', (error) => {
+  console.error('Session store error:', error);
+});
+
+// Configure session middleware
+app.use(session({
+  secret: 'you-always-on-my-mind',
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+    secure: false, // Set to true if using HTTPS
+    httpOnly: true // Prevents client-side access to the cookie
+  }
+}));
+
+// Error handling middleware for Express
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({ success: false, message: 'Internal server error' });
+});
+
 // Endpoint for user login
 app.post('/login', (req, res) => {
   const { identifier, password } = req.body; // Use 'identifier' to accept either username or email
-  const sql = 'SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?'; // Modify the SQL query
-  connection.query(sql, [identifier, identifier, password], (err, results) => {
+  const sql = 'SELECT * FROM users WHERE (username = ? OR email = ?)'; // Update SQL query to retrieve user by username or email
+  connection.query(sql, [identifier, identifier], async (err, results) => { // Removed 'AND password = ?' from SQL query
     if (err) {
       console.error(err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
     if (results.length > 0) {
-      return res.json({ success: true, message: 'Login successful' });
+      const user = results[0];
+      try {
+        // Compare the provided password with the hashed password from the database
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (passwordMatch) {
+          // Set user data in the session upon successful login
+          req.session.user = {
+            user_id: user.user_id,
+            username: user.username,
+            Fname: user.Fname,
+            Lname: user.Lname,
+            contact: user.contact,
+            email: user.email
+          };
+          console.log('User logged in:', req.session.user); // Log session use
+          return res.json({ success: true, message: 'Login successful' });
+        } else {
+          return res.status(401).json({ success: false, message: 'Invalid password' });
+        }
+      } catch (error) {
+        console.error('Error comparing passwords:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
     } else {
-      return res.status(401).json({ success: false, message: 'Invalid username or password' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
   });
 });
 
-// Endpoint for user signup
-app.post('/signup', (req, res) => {
-  const { username, password, firstName, lastName, phone, email } = req.body; // Updated field names
-  
-  console.log('Received signup request:', req.body); // Log the received signup request data
-  
-  const sql = 'INSERT INTO users (username, password, Fname, Lname, contact, email) VALUES (?, ?, ?, ?, ?, ?)';
-  console.log('SQL query:', sql); // Log the SQL query
-  
-  connection.query(sql, [username, password, firstName, lastName, phone, email], (err, results) => {
+// Endpoint for checking login status
+app.get('/check-login', (req, res) => {
+  // Retrieve session data from the database
+  sessionStore.get(req.sessionID, (err, session) => {
     if (err) {
-      console.error('Error executing SQL query:', err); // Log any SQL query execution errors
-      // Send the error message as part of the response JSON
-      return res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+      console.error('Error fetching session from database:', err);
+      return res.status(500).json({ isLoggedIn: false, error: 'Internal server error' });
     }
-    console.log('Signup successful. Affected rows:', results.affectedRows); // Log the number of affected rows
-    return res.json({ success: true, message: 'Signup successful' });
+
+    // Check if session exists and has user data
+    if (session && session.user) {
+      // User is logged in
+      return res.status(200).json({ isLoggedIn: true, user: session.user });
+    } else {
+      // Session not found or user not logged in
+      return res.status(200).json({ isLoggedIn: false });
+    }
   });
 });
+
+// Endpoint to get username from session
+app.get('/get-username', (req, res) => {
+  // Check if user is logged in and session contains username
+  if (req.session.user && req.session.user.username) {
+    const { username } = req.session.user;
+    return res.json({ success: true, username });
+  } else {
+    return res.status(401).json({ success: false, message: 'User not authenticated' });
+  }
+});
+
+
+// Signup Endpoint
+app.post('/signup', async (req, res) => {
+  const { username, password, firstName, lastName, phone, email } = req.body;
+
+  console.log('Received signup request:', req.body);
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const sql = 'INSERT INTO users (username, password, Fname, Lname, contact, email) VALUES (?, ?, ?, ?, ?, ?)';
+    
+    connection.query(sql, [username, hashedPassword, firstName, lastName, phone, email], (err, results) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+      }
+
+      console.log('Signup successful. Affected rows:', results.affectedRows);
+
+      // Return a success response
+      return res.json({ success: true, message: 'Signup successful' });
+    });
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    return res.status(500).json({ success: false, message: 'Error hashing password' });
+  }
+});
+
+// Endpoint for user logout
+app.post('/logout', (req, res) => {
+  // Destroy the session
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Session destroyed successfully
+    return res.json({ success: true, message: 'Logout successful' });
+  });
+});
+
 
 // Endpoint for admin list of client
 app.get('/clients', (req, res) => {

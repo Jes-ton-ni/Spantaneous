@@ -11,10 +11,27 @@ const Nav = () => {
   const navRef = useRef();
   const [activeLink, setActiveLink] = useState('/');
   const location = useLocation();
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     // Update activeLink when location changes
     setActiveLink(location.pathname);
+
+    // Fetch username from the server
+    const fetchUsername = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get-username', {
+          method: 'GET',
+          credentials: 'include' // Include cookies in the request
+        });
+        const data = await response.json();
+        setUsername(data.username);
+      } catch (error) {
+        console.error('Error fetching username:', error);
+      }
+    };
+
+    fetchUsername();
   }, [location]);
 
   const showNavbar = () => {
@@ -30,8 +47,26 @@ const Nav = () => {
   };
    
 
-  //sample username
-  const username = "Alepse";
+  const handleLogout = async (e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    try {
+      const response = await fetch('http://localhost:5000/logout', {
+        method: 'POST',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        // Logout successful
+        console.log('Logout successful');
+        // Redirect or perform any additional actions after logout
+      } else {
+        // Logout failed
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      // Handle error, display error message or any appropriate action
+    }
+  };
 
   return (
     <header className='px-4 w-full padding-x'>
@@ -72,7 +107,7 @@ const Nav = () => {
             {showDropdown && (
               <div className="absolute bg-white right-0 mt-2 rounded-md shadow-lg z-20">
                 <a href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Profile</a>
-                <a href="/logout" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Logout</a>
+                <a href="/login" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Logout</a>
               </div>
             )}
           </div>
@@ -112,7 +147,9 @@ const Nav = () => {
                 {showDropdown && (
                   <div className="absolute bg-white right-0 mt-2 rounded-md shadow-lg z-20">
                     <a href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Profile</a>
-                    <a href="/logout" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Logout</a>
+                    <a href="#!" className="block px-4 py-2 text-gray-800 hover:bg-gray-200" onClick={handleLogout}>
+                      Logout
+                    </a>
                   </div>
                 )}
               </div>
