@@ -48,7 +48,7 @@ const Contactpage = () => {
     document.title = 'Contact - Spa-ntaneous'
   },[]);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   // Function to check login status
   const checkLoginStatus = async () => {

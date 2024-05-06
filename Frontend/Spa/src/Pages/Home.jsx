@@ -54,7 +54,7 @@ const Home = () => {
     document.title = 'Home - Spa-ntaneous';
   }, []);
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   // Function to check login status
   const checkLoginStatus = async () => {

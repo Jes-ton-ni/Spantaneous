@@ -47,6 +47,8 @@ const ScrollToTopButton = () => {
 
 const Services = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
   const [services, setServices] = useState({
      'All': [],
     'Massage': [],
@@ -54,7 +56,12 @@ const Services = () => {
     'Nail Treatment': [],
     'Body Treatment': []
   });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleServiceSelect = (service) => {
+    setSelectedService(service);
+  };
+
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   // Function to check login status
   const checkLoginStatus = async () => {
@@ -75,6 +82,10 @@ const Services = () => {
       // Handle error, e.g., show an error message to the user
     }
   };  
+
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
 
   useEffect(() => {
     // Fetch services from the server when the component mounts
@@ -105,11 +116,7 @@ const Services = () => {
   };
 
   const handleReserveClick = () => { // Onclick
-    
-    const isLoggedIn = false; 
-
     if (!isLoggedIn) {
-      
       Swal.fire({
         icon: 'warning',
         title: 'Please log in first!',
@@ -119,6 +126,9 @@ const Services = () => {
         confirmButtonColor: '#21312d'
       });
     } 
+    else {
+      setIsModalOpen(!isModalOpen);
+    }
   };
 
   return (
@@ -159,7 +169,7 @@ const Services = () => {
                     <h3 className="text-lg font-semibold mb-2">{service.name}</h3>
                     <p className="text-gray-800">{service.description}</p>
                     <p className="text-gray-600 mt-2">Price: PHP {service.price}</p>
-                    <button onClick={handleReserveClick} className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out">Reserve</button>
+                    <button onClick={() => { handleServiceSelect(service); handleReserveClick();}} className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out">Reserve</button>
                   </div>
                 ))}
               </div>
@@ -167,6 +177,67 @@ const Services = () => {
           ))}
         </Tabs>
       </section>
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-light p-8 rounded-lg overflow-auto">
+            <h2 className="text-3xl  mb-6 text-center font-palanquin font-semibold">Reservation Form</h2>
+            <form className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="mb-4">
+                  <label htmlFor="name" className="block text-sm font-medium text-dark">Name</label>
+                  <input type="text" id="name" name="name" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md p-2" />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="email" className="block text-sm font-medium text-dark">Email</label>
+                  <input type="email" id="email" name="email" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="phone" className="block text-sm font-medium text-dark">Phone Number</label>
+                  <input type="tel" id="phone" name="phone" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="date" className="block text-sm font-medium text-dark">Date</label>
+                  <input type="date" id="date" name="date" className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+              </div>
+              <div>
+                <div className="mb-4">
+                  <label htmlFor="service" className="block text-sm font-medium text-dark">Service</label>
+                  <input type="text" id="service" name="service" value={selectedService.service_name} readOnly className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="price" className="block text-sm font-medium text-dark">Price</label>
+                  <input type="text" id="price" name="price" value={`PHP ${selectedService.price}`} readOnly className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="time" className="block text-sm font-medium text-dark">Time</label>
+                  <input type="time" id="time" name="time" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                </div>
+              </div>
+              <div className="col-span-2 mb-4">
+                <label htmlFor="message" className="block text-sm font-medium text-dark">Message</label>
+                <textarea id="message" name="message" rows="3" className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2"></textarea>
+              </div>
+              <div className="col-span-2 flex justify-end">
+                <button
+                  type="button"
+                  className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2 focus:outline-none focus:shadow-outline"
+                  onClick={toggleModal}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Reserve Now
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )} 
       <section>
         <Footer />
       </section>

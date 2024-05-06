@@ -7,9 +7,9 @@ import close from '../assets/icons/close.svg';
 
 const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
-  const navRef = useRef();
   const [activeLink, setActiveLink] = useState('/');
+  const navRef = useRef();
+  const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
   const location = useLocation();
   const [username, setUsername] = useState('');
 
@@ -30,8 +30,8 @@ const Nav = () => {
         console.error('Error fetching username:', error);
       }
     };
-
     fetchUsername();
+
   }, [location]);
 
   const showNavbar = () => {

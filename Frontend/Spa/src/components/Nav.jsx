@@ -50,6 +50,8 @@ const Nav = () => {
           <a href="/login"> 
             <img className='hover:bg-slate-200 rounded-3xl duration-500' src={User} alt="user" width={35}/>
           </a>
+
+          {/* Reserve Now button */}
           <a href="/booking">
             <button className='rounded-r-full bg-dark text-light p-2 hover:bg-light-dark duration-500 text-sm'>Reserve Now ➣</button>
           </a>
