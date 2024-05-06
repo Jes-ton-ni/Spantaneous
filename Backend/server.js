@@ -181,17 +181,40 @@ app.post('/signup', async (req, res) => {
 
 // Endpoint for user logout
 app.post('/logout', (req, res) => {
-  // Destroy the session
-  req.session.destroy((err) => {
+  // Check if session exists in the session store
+  sessionStore.get(req.sessionID, (err, session) => {
     if (err) {
-      console.error('Error destroying session:', err);
+      console.error('Error fetching session from database:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
     }
-    // Session destroyed successfully
-    return res.json({ success: true, message: 'Logout successful' });
+
+    // Check if session exists and has user data
+    if (session && session.user) {
+      const userId = session.user.user_id;
+      // Destroy the session in the database using the session ID
+      sessionStore.destroy(req.sessionID, (err) => {
+        if (err) {
+          console.error('Error destroying session in database:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+        // Clear cookies by setting their expiration time to a past date
+        res.clearCookie('connect.sid');
+        // Destroy the session on the server
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Error destroying session:', err);
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+          }
+          // Session destroyed successfully
+          return res.json({ success: true, message: 'Logout successful' });
+        });
+      });
+    } else {
+      // If session does not exist or does not contain user data
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
   });
 });
-
 
 // Endpoint for admin list of client
 app.get('/clients', (req, res) => {

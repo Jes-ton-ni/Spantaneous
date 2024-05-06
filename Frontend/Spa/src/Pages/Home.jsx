@@ -81,7 +81,6 @@ const Home = () => {
     checkLoginStatus();
   }, []);
 
-
   return (
     <main className="relative">
       <section>

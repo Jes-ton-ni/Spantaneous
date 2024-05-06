@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { HiOutlineArrowUp } from 'react-icons/hi'; 
 import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav'
+import Nav2 from '../components/Nav2';
 import bg from '../assets/img/back.jpg'
 import Footer from '../sections/Footer'
 import logo from '../assets/img/Logo.png'
@@ -43,17 +44,41 @@ const ScrollToTopButton = () => {
 };
 
 const Contactpage = () => {
-
-  
   useEffect(() => {
     document.title = 'Contact - Spa-ntaneous'
-   },[])
- 
+  },[]);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Function to check login status
+  const checkLoginStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/check-login', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        const data = await response.json(); // Parse response body as JSON
+        // Check the value of isLoggedIn
+        setIsLoggedIn(data.isLoggedIn);
+      } else {
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      // Handle error, e.g., show an error message to the user
+    }
+  };  
+
+  useEffect(() => {
+    // Call the function to check login status when the component mounts
+    checkLoginStatus();
+  }, []); 
    
   return (
     <main>
       <section>
-        <Nav/>
+        {isLoggedIn ? <Nav2 /> : <Nav />}
       </section>
 
       <header className=" mx-auto h-[20rem] flex justify-center items-center bg-center bg-cover border-b-8 border-dark" style={{backgroundImage: `url(${bg})`}}>

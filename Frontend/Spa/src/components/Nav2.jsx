@@ -57,7 +57,8 @@ const Nav = () => {
       if (response.ok) {
         // Logout successful
         console.log('Logout successful');
-        // Redirect or perform any additional actions after logout
+        // Redirect to the login page
+        window.location.href = '/login';
       } else {
         // Logout failed
         console.error('Logout failed');
@@ -88,12 +89,6 @@ const Nav = () => {
           <li className={`hover:text-light-dark transition-colors duration-200 ${activeLink === '/contact' ? 'underline' : ''}`}>
             <a href="/contact">Contact</a>
           </li>
-          <li className="hover:text-light-dark transition-colors duration-200 hover:underline">
-            <a href="/admin">Admin</a>
-          </li>
-          <li className="hover:text-light-dark transition-colors duration-200 hover:underline">
-            <a href="/employee">Employee</a>
-          </li>
         </ul>
         
         <div className='text-light max-xl:hidden justify-center flex items-center gap-9 ml-16'>
@@ -107,7 +102,7 @@ const Nav = () => {
             {showDropdown && (
               <div className="absolute bg-white right-0 mt-2 rounded-md shadow-lg z-20">
                 <a href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Profile</a>
-                <a href="/login" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Logout</a>
+                <a href="#!" className="block px-4 py-2 text-gray-800 hover:bg-gray-200" onClick={handleLogout}>Logout</a>
               </div>
             )}
           </div>
