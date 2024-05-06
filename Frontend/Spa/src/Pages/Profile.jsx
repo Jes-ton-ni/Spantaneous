@@ -6,6 +6,8 @@ import bg from '../assets/img/back.jpg';
 const Profile = () => {
   const [showModal, setShowModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [bookings, setBookings] = useState([]);
+  const [appointments, setUserAppointments] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [userData, setUserData] = useState({
@@ -112,32 +114,33 @@ const Profile = () => {
 
   const [alertMessage, setAlertMessage] = useState("");
 
-  const appointments = [
-    {
-      name: 'Kenneth Alepse',
-      service: 'Deep Tissue Massage',
-      schedule: '1970-01-01 01:00 pm',
-      total: 'PHP 1000',
-      status: 'Pending',
-     
-    },
-    {
-      name: 'Kenneth Alepse',
-      service: 'Classic Facial',
-      schedule: '1970-01-02 02:00 pm',
-      total: 'PHP 950',
-      status: 'Approved',
-      note: ''
-    },
-    {
-      name: 'Kenneth Alepse',
-      service: 'Pedicure',
-      schedule: '1970-01-03 03:00 pm',
-      total: 'PHP 300',
-      status: 'Paid',
-      note: ''
+  // Define a function to fetch appointments from the server
+  const fetchAppointments = async () => {
+    try {
+      // Make a GET request to the /appointments endpoint
+      const response = await fetch('http://localhost:5000/appointments');
+      if (!response.ok) {
+        throw new Error('Failed to fetch appointments');
+      }
+      const data = await response.json();
+      // Update the bookings state with the fetched appointments
+      setBookings(data.appointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
     }
-  ];
+  };
+
+  // Call the fetchAppointments function when the component mounts
+  useEffect(() => {
+    fetchAppointments();
+    return () => {
+    };
+  }, []);
+
+  useEffect(() => {
+    const appointment = bookings.filter(booking => booking.customer_id === 76 );
+    setUserAppointments(appointment);
+  }, [bookings]);
 
   return (
     <main>
@@ -374,8 +377,8 @@ const Profile = () => {
                     <div>
                     <p className="text-gray-700 mb-2">Service: {selectedAppointment.name}</p>
                       <p className="text-gray-700 mb-2">Service: {selectedAppointment.service}</p>
-                      <p className="text-gray-700 mb-2">Schedule: {selectedAppointment.schedule}</p>
-                      <p className="text-gray-700 mb-2">Total: {selectedAppointment.total}</p>
+                      <p className="text-gray-700 mb-2">Schedule: {new Date(selectedAppointment.date_appointed).toLocaleDateString()} {new Date(selectedAppointment.date_appointed).toLocaleTimeString()}</p>
+                      <p className="text-gray-700 mb-2">Total: PHP{selectedAppointment.price_final}</p>
                     </div>
                   )}
                   <form onSubmit={handlePayment}>
@@ -434,13 +437,13 @@ const Profile = () => {
               <div className="border border-light-dark p-4 mb-4 rounded-lg shadow-md" key={index}>
                 <h3 className="font-semibold text-lg text-white">{appointment.service}</h3>
                 <p className="text-gray-300"><strong>Name:</strong> {appointment.name}</p>
-                <p className="text-gray-300"><strong>Schedule:</strong> {appointment.schedule}</p>
-                <p className="text-gray-300"><strong>Total:</strong> {appointment.total}</p>
-                <p className="text-gray-300"><strong>Status:</strong> {appointment.status}</p>
-                {appointment.status === 'Approved' && (
+                <p className="text-gray-300"><strong>Schedule:</strong> {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
+                <p className="text-gray-300"><strong>Total:</strong> {appointment.price_final}</p>
+                <p className="text-gray-300"><strong>Status:</strong> {appointment.request_status ? 'Approved' : 'Pending'}</p>
+                {appointment.request_status === 1 && appointment.payment_status === 0 && (
                   <button className="bg-green-500 text-white rounded px-2 py-1 mt-2" onClick={() => handlePayment(index)}>Pay</button>
                 )}
-                {appointment.status === 'Paid' && (
+                {appointment.payment_status === 1 && (
                   <p className="text-green-500 font-semibold mt-2">Paid</p>
                 )}
                 {index !== appointments.length - 1 && <hr className="border-gray-400 my-4" />}

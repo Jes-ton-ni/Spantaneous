@@ -450,6 +450,7 @@ app.get('/appointments', (req, res) => {
   const sql = `
     SELECT 
       appointments.appointment_id,
+      appointments.customer_id,
       users.username,
       CONCAT(
         UPPER(SUBSTRING(users.Fname, 1, 1)),

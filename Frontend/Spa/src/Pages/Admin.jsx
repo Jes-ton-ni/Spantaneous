@@ -791,7 +791,7 @@ const Admin = () => {
     const [pendingAppointment, setPendingAppointment] = useState([]);
     const [appointmentAccepted, setAppointmentAccepted] = useState([]);
   
-     // Define a function to fetch appointments from the server
+    // Define a function to fetch appointments from the server
     const fetchAppointments = async () => {
       try {
         // Make a GET request to the /appointments endpoint
@@ -931,7 +931,7 @@ const Admin = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ request_status: 2 }), // Assuming "request_status" is the field name
+          body: JSON.stringify({ request_status: 2 }),
         });
 
         if (!response.ok) {
