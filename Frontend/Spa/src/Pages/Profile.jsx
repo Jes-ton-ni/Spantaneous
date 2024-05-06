@@ -203,7 +203,7 @@ const Profile = () => {
                       type="text"
                       name="firstName"
                       placeholder="First Name"
-                      value={userData.firstName}
+                      defaultValue={userData.firstName}
                       onChange={handleChange}
                     />
                   </div>
@@ -217,7 +217,7 @@ const Profile = () => {
                       type="text"
                       name="lastName"
                       placeholder="Last Name"
-                      value={userData.lastName}
+                      defaultValue={userData.lastName}
                       onChange={handleChange}
                     />
                   </div>
@@ -231,7 +231,7 @@ const Profile = () => {
                       type="text"
                       name="username"
                       placeholder="Username"
-                      value={userData.username}
+                      defaultValue={userData.username}
                       onChange={handleChange}
                     />
                   </div>
@@ -245,7 +245,7 @@ const Profile = () => {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      value={userData.email}
+                      defaultValue={userData.email}
                       onChange={handleChange}
                     />
                   </div>
@@ -259,7 +259,7 @@ const Profile = () => {
                       type="text"
                       name="contact"
                       placeholder="Contact"
-                      value={userData.contact}
+                      defaultValue={userData.contact}
                       onChange={handleChange}
                     />
                   </div>
