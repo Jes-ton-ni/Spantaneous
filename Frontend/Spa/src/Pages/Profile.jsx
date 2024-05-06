@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Nav from '../components/Nav';
 import Footer from '../sections/Footer';
 import bg from '../assets/img/back.jpg'; 
@@ -8,16 +8,56 @@ const Profile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [formData, setFormData] = useState({
-    firstName: 'Kenneth',
-    lastName: 'Espela',
-    username: 'Kenneth@1111',
-    email: 'kenneth@gmail.com',
-    contact: '09123456789',
+  const [userData, setUserData] = useState({
+    firstName: '',
+    lastName: '',
+    username: '',
+    email: '',
+    contact: '',
     currentPassword: '',
     newPassword: '',
     confirmNewPassword: ''
   });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Function to check login status and user data
+  const checkLoginStatus = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/check-login', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Set isLoggedIn state
+        setIsLoggedIn(data.isLoggedIn);
+        // Set userData state
+        if (data.isLoggedIn) {
+          setUserData({
+            firstName: data.user.Fname || '',
+            lastName: data.user.Lname || '',
+            username: data.user.username || '',
+            email: data.user.email || '',
+            contact: data.user.contact || '',
+            currentPassword: '',
+            newPassword: '',
+            confirmNewPassword: ''
+          });
+        }
+      } else {
+        // If response is not ok, set isLoggedIn to false
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      // Handle error, e.g., show an error message to the user
+    }
+  }; 
+  
+  useEffect(() => {
+    // Call the function to check login status when the component mounts
+    checkLoginStatus();
+  }, []);
 
   const toggleModal = () => {
     setShowModal(!showModal);
@@ -32,15 +72,15 @@ const Profile = () => {
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setUserData({
+      ...userData,
       [e.target.name]: e.target.value
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);
+    console.log(userData);
     toggleModal();
     setAlertMessage("You have successfully updated your profile!");
     setTimeout(() => {
@@ -51,9 +91,9 @@ const Profile = () => {
   const handlePasswordChange = (e) => {
     e.preventDefault();
     console.log('Changing password...');
-    console.log(formData);
+    console.log(formDauserDatata);
     setFormData({
-      ...formData,
+      ...userData,
       currentPassword: '',
       newPassword: '',
       confirmNewPassword: ''
@@ -119,14 +159,14 @@ const Profile = () => {
               {alertMessage}
             </div>
           )}
-          <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {formData.firstName}!</h2>
+          <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {userData.firstName}!</h2>
           <div className="mb-4 space-y-2">
             <h2 className='text-2xl font-palanquin font-bold'>Profile Information:</h2>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {formData.firstName}</p>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {formData.lastName}</p>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {formData.username}</p>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {formData.email}</p>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {formData.contact}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {userData.firstName}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {userData.lastName}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {userData.username}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {userData.email}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {userData.contact}</p>
             <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={toggleModal}>Update Profile</button>
           </div>
           <div className="mb-4 space-y-2">
@@ -160,7 +200,7 @@ const Profile = () => {
                       type="text"
                       name="firstName"
                       placeholder="First Name"
-                      value={formData.firstName}
+                      value={userData.firstName}
                       onChange={handleChange}
                     />
                   </div>
@@ -174,7 +214,7 @@ const Profile = () => {
                       type="text"
                       name="lastName"
                       placeholder="Last Name"
-                      value={formData.lastName}
+                      value={userData.lastName}
                       onChange={handleChange}
                     />
                   </div>
@@ -188,7 +228,7 @@ const Profile = () => {
                       type="text"
                       name="username"
                       placeholder="Username"
-                      value={formData.username}
+                      value={userData.username}
                       onChange={handleChange}
                     />
                   </div>
@@ -202,7 +242,7 @@ const Profile = () => {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      value={formData.email}
+                      value={userData.email}
                       onChange={handleChange}
                     />
                   </div>
@@ -216,7 +256,7 @@ const Profile = () => {
                       type="text"
                       name="contact"
                       placeholder="Contact"
-                      value={formData.contact}
+                      value={userData.contact}
                       onChange={handleChange}
                     />
                   </div>
@@ -263,7 +303,7 @@ const Profile = () => {
                       type="password"
                       name="currentPassword"
                       placeholder="Current Password"
-                      value={formData.currentPassword}
+                      value={userData.currentPassword}
                       onChange={handleChange}
                     />
                   </div>
@@ -277,7 +317,7 @@ const Profile = () => {
                       type="password"
                       name="newPassword"
                       placeholder="New Password"
-                      value={formData.newPassword}
+                      value={userData.newPassword}
                       onChange={handleChange}
                     />
                   </div>
@@ -291,7 +331,7 @@ const Profile = () => {
                       type="password"
                       name="confirmNewPassword"
                       placeholder="Confirm New Password"
-                      value={formData.confirmNewPassword}
+                      value={userData.confirmNewPassword}
                       onChange={handleChange}
                     />
                   </div>
@@ -317,73 +357,73 @@ const Profile = () => {
         )}
 
         {showPaymentModal && (
-  <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
-    <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
-    <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
-      <div className="modal-content py-4 text-left px-6">
-        <div className="flex justify-between items-center pb-3">
-          <p className="text-2xl font-semibold">Payment Details</p>
-          <button className="modal-close" onClick={togglePaymentModal}>
-            <span className="text-3xl">&times;</span>
-          </button>
-        </div>
-        <div className="flex justify-center items-center">
-          <div className="flex flex-col justify-center items-center bg-gray-100 p-8 rounded-lg w-full">
-            {/* Display selected appointment details */}
-            {selectedAppointment && (
-              <div>
-              <p className="text-gray-700 mb-2">Service: {selectedAppointment.name}</p>
-                <p className="text-gray-700 mb-2">Service: {selectedAppointment.service}</p>
-                <p className="text-gray-700 mb-2">Schedule: {selectedAppointment.schedule}</p>
-                <p className="text-gray-700 mb-2">Total: {selectedAppointment.total}</p>
+        <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
+          <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+          <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
+            <div className="modal-content py-4 text-left px-6">
+              <div className="flex justify-between items-center pb-3">
+                <p className="text-2xl font-semibold">Payment Details</p>
+                <button className="modal-close" onClick={togglePaymentModal}>
+                  <span className="text-3xl">&times;</span>
+                </button>
               </div>
-            )}
-            <form onSubmit={handlePayment}>
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="paymentMethod">
-                  Choose Payment Method
-                </label>
-                <select
-                  id="paymentMethod"
-                  name="paymentMethod"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                >
-                  <option >-- Select Payment Method --</option>
-                  <option value="creditCard">Credit Card</option>
-                  <option value="paypal">PayPal</option>
-                  <option value="paymaya">PayMaya</option>
-                  <option value="gcash">GCash</option>
-                </select>
-              </div>
-        
-              <div className="mb-4">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="transactionRef">
-                  Transaction Reference
-                </label>
-                <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  id="transactionRef"
-                  type="text"
-                  name="transactionRef"
-                  placeholder="Enter Transaction Reference"
-                  required
-                />
-              </div>
-              {/* Additional form fields for payment details */}
-            </form>
+              <div className="flex justify-center items-center">
+                <div className="flex flex-col justify-center items-center bg-gray-100 p-8 rounded-lg w-full">
+                  {/* Display selected appointment details */}
+                  {selectedAppointment && (
+                    <div>
+                    <p className="text-gray-700 mb-2">Service: {selectedAppointment.name}</p>
+                      <p className="text-gray-700 mb-2">Service: {selectedAppointment.service}</p>
+                      <p className="text-gray-700 mb-2">Schedule: {selectedAppointment.schedule}</p>
+                      <p className="text-gray-700 mb-2">Total: {selectedAppointment.total}</p>
+                    </div>
+                  )}
+                  <form onSubmit={handlePayment}>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="paymentMethod">
+                        Choose Payment Method
+                      </label>
+                      <select
+                        id="paymentMethod"
+                        name="paymentMethod"
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      >
+                        <option >-- Select Payment Method --</option>
+                        <option value="creditCard">Credit Card</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="paymaya">PayMaya</option>
+                        <option value="gcash">GCash</option>
+                      </select>
+                    </div>
+              
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="transactionRef">
+                        Transaction Reference
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="transactionRef"
+                        type="text"
+                        name="transactionRef"
+                        placeholder="Enter Transaction Reference"
+                        required
+                      />
+                    </div>
+                    {/* Additional form fields for payment details */}
+                  </form>
 
-            <button
-                type="submit"
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
-              >
-                Confirm Payment
-              </button>
+                  <button
+                      type="submit"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    >
+                      Confirm Payment
+                    </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+        )}
 
 
         {/* View Appointments Section */}

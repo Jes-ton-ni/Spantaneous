@@ -18,32 +18,6 @@ const Aboutpage = () => {
    document.title = 'About - Spa-ntaneous'
   },[])
 
-  const [isLoggedIn, setIsLoggedIn] = useState(null);
-    // Function to check login status
-    const checkLoginStatus = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/check-login', {
-          method: 'GET',
-          credentials: 'include' // Include cookies in the request
-        });
-        if (response.ok) {
-          const data = await response.json(); // Parse response body as JSON
-          // Check the value of isLoggedIn
-          setIsLoggedIn(data.isLoggedIn);
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch (error) {
-        console.error('Error checking login status:', error);
-        // Handle error, e.g., show an error message to the user
-      }
-    };  
-  
-    useEffect(() => {
-      // Call the function to check login status when the component mounts
-      checkLoginStatus();
-    }, []);
-
   const ScrollToTopButton = () => {
     const [isVisible, setIsVisible] = useState(false);
   

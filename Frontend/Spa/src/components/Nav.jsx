@@ -17,21 +17,6 @@ const Nav = () => {
     // Update activeLink when location changes
     setActiveLink(location.pathname);
 
-    // Fetch username from the server
-    const fetchUsername = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/get-username', {
-          method: 'GET',
-          credentials: 'include' // Include cookies in the request
-        });
-        const data = await response.json();
-        setUsername(data.username);
-      } catch (error) {
-        console.error('Error fetching username:', error);
-      }
-    };
-    fetchUsername();
-
   }, [location]);
 
   const showNavbar = () => {
@@ -82,6 +67,7 @@ const Nav = () => {
         const data = await response.json(); // Parse response body as JSON
         // Check the value of isLoggedIn
         setIsLoggedIn(data.isLoggedIn);
+        
       } else {
         setIsLoggedIn(false);
       }
@@ -95,6 +81,27 @@ const Nav = () => {
     // Call the function to check login status when the component mounts
     checkLoginStatus();
   }, []);
+
+  // Fetch username from the server
+  const fetchUsername = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get-username', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      const data = await response.json();
+      setUsername(data.username);
+    } catch (error) {
+      console.error('Error fetching username:', error);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch username if user is logged in
+    if (isLoggedIn) {
+      fetchUsername();
+    }
+  }, [isLoggedIn]);
 
   return (
     <header className='px-4 w-full padding-x'>
