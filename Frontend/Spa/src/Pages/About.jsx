@@ -2,7 +2,6 @@ import {useEffect, useState} from 'react';
 import { HiOutlineArrowUp } from 'react-icons/hi'; 
 import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav'
-import Nav2 from '../components/Nav2';
 import Team from '../sections/Team'
 import Footer from '../sections/Footer'
 import bg from '../assets/img/back.jpg'
@@ -85,7 +84,7 @@ const Aboutpage = () => {
     <main className='relative' >
 
       <section>
-        {isLoggedIn ? <Nav2 /> : <Nav />}
+        <Nav />
       </section>
 
       <header className=" mx-auto h-[20rem]  flex justify-center items-center bg-center bg-cover border-b-8 border-dark" style={{backgroundImage: `url(${bg})`}}>

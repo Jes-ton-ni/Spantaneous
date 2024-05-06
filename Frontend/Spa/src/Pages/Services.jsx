@@ -3,7 +3,6 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import { HiOutlineArrowUp } from 'react-icons/hi'; 
 import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav';
-import Nav2 from '../components/Nav2';
 import bg from '../assets/img/back.jpg';
 import Footer from '../sections/Footer';
 import Swal from 'sweetalert2';
@@ -134,7 +133,7 @@ const Services = () => {
   return (
     <main>
       <section>
-        {isLoggedIn ? <Nav2 /> : <Nav />}
+        <Nav />
       </section>
 
       <header className="mx-auto h-[20rem] flex justify-center items-center bg-center bg-cover border-b-8 border-dark" style={{ backgroundImage: `url(${bg})` }}>

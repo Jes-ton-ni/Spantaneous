@@ -8,7 +8,6 @@ import Footer from '../sections/Footer';
 import Gallery from '../sections/Gallery';
 import Services from '../sections/Services';
 import Nav from '../components/Nav';
-import Nav2 from '../components/Nav2';
 import bg2 from '../assets/img/white.jpg';
 import bg from '../assets/img/back.jpg';
 import bg3 from '../assets/img/spa.jpg';
@@ -84,7 +83,7 @@ const Home = () => {
   return (
     <main className="relative">
       <section>
-        {isLoggedIn ? <Nav2 /> : <Nav />}
+        <Nav />
       </section>
 
       <section className="mx-auto bg-cover bg-center" style={{ backgroundImage: `url(${bg})` }}>

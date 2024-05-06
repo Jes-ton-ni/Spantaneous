@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { HiOutlineArrowUp } from 'react-icons/hi'; 
 import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav';
-import Nav2 from '../components/Nav2';
 import Footer from '../sections/Footer';
 import bg from '../assets/img/back.jpg';
 import logo from '../assets/img/Logo.png';
@@ -103,7 +102,7 @@ const Booking = () => {
   return (
     <main>
       <section>
-        {isLoggedIn ? <Nav2 /> : <Nav />}
+        <Nav />
       </section>
 
       <header className="h-[20rem] flex flex-col justify-center items-center bg-center bg-cover border-b-8 border-dark" style={{ backgroundImage: `url(${bg})` }}>
