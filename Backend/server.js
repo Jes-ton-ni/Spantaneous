@@ -444,6 +444,26 @@ app.delete('/services/:id', (req, res) => {
   });
 });
 
+// Endpoint to add an appointment
+app.post('/set-appointment', async (req, res) => {
+  const { date_appointed, customer_id, service_id, message} = req.body;
+
+  console.log('Received appointment request:', req.body);
+ 
+  const sql = 'INSERT INTO appointments (date_appointed, customer_id, service_booked, message) VALUES (?, ?, ?, ?)';
+
+  connection.query(sql, [date_appointed, customer_id, service_id, message], (err, results) => {
+    if (err) {
+      console.error('Error executing SQL query:', err);
+      return res.status(500).json({ success: false, message: 'Internal server', error: err.message });
+    }
+
+    console.log('Appointment sent successfully. Affected rows:', results.affectedRows);
+
+    return res.json({ success: true, message: 'Appointment sent successfully' });
+  });
+})
+
 // Endpoint to fetch appointments
 app.get('/appointments', (req, res) => {
   // SQL query to join appointments, users, and services tables to get relevant data
