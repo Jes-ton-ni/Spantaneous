@@ -120,7 +120,7 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    const appointment = bookings.filter(booking => booking.customer_id === 76 );
+    const appointment = bookings.filter(booking => booking.customer_id === userData.user_id );
     setUserAppointments(appointment);
   }, [bookings]);
 
