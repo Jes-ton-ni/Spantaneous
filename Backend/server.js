@@ -33,7 +33,6 @@ connection.connect((err) => {
   console.log('Connected to database');
 });
 
-
 // MySQL session store configuration
 const sessionStore = new MySQLStore({
   database: 'spantaneous',
@@ -149,7 +148,6 @@ app.get('/get-username', (req, res) => {
     return res.status(401).json({ success: false, message: 'User not authenticated' });
   }
 });
-
 
 // Signup Endpoint
 app.post('/signup', async (req, res) => {
@@ -444,26 +442,6 @@ app.delete('/services/:id', (req, res) => {
   });
 });
 
-// Endpoint to add an appointment
-app.post('/set-appointment', async (req, res) => {
-  const { date_appointed, customer_id, service_id, message} = req.body;
-
-  console.log('Received appointment request:', req.body);
- 
-  const sql = 'INSERT INTO appointments (date_appointed, customer_id, service_booked, message) VALUES (?, ?, ?, ?)';
-
-  connection.query(sql, [date_appointed, customer_id, service_id, message], (err, results) => {
-    if (err) {
-      console.error('Error executing SQL query:', err);
-      return res.status(500).json({ success: false, message: 'Internal server', error: err.message });
-    }
-
-    console.log('Appointment sent successfully. Affected rows:', results.affectedRows);
-
-    return res.json({ success: true, message: 'Appointment sent successfully' });
-  });
-})
-
 // Endpoint to fetch appointments
 app.get('/appointments', (req, res) => {
   // SQL query to join appointments, users, and services tables to get relevant data
@@ -506,6 +484,29 @@ app.get('/appointments', (req, res) => {
     }
     // Send the list of appointments as the response
     return res.json({ success: true, appointments: results });
+  });
+});
+
+// Endpoint to add an appointment
+app.post('/set-appointment', async (req, res) => {
+  const { date, time, customer_id, service_id, message } = req.body;
+
+  console.log('Received appointment request:', req.body);
+ 
+  // Combine date and time into a single Date object
+  const date_appointed = new Date(`${date} ${time}`);
+
+  const sql = `INSERT INTO appointments (date_appointed, customer_id, service_booked, message) VALUES (?, ?, ?, ?)`;
+
+  connection.query(sql, [date_appointed, customer_id, service_id, message], (err, results) => {
+    if (err) {
+      console.error('Error executing SQL query:', err);
+      return res.status(500).json({ success: false, message: 'Internal server', error: err.message });
+    }
+
+    console.log('Appointment sent successfully. Affected rows:', results.affectedRows);
+
+    return res.json({ success: true, message: 'Appointment sent successfully' });
   });
 });
 
@@ -565,6 +566,7 @@ app.post('/assigned-employees', (req, res) => {
   // Extract data from the request body
   const { employee_id, appointment_id, service_category, status } = req.body;
 
+  console.log('Received assidned-employee request:', req.body);
   // SQL query to insert data into the assigned_employee table
   const sql = `
     INSERT INTO assigned_employee (employee_id, appointment_id, service_category, status)

@@ -56,6 +56,17 @@ const Services = () => {
     'Body Treatment': []
   });
 
+  // State for set an appointment form
+  const [newAppointment, setNewAppointment] = useState({
+    date: '',
+    time: '',
+    customer_id: '',
+    service_id: '',
+    message: ''
+  });  
+
+  const [userData, setUserData] = useState([]);
+
   const handleServiceSelect = (service) => {
     setSelectedService(service);
   };
@@ -73,6 +84,7 @@ const Services = () => {
         const data = await response.json(); // Parse response body as JSON
         // Check the value of isLoggedIn
         setIsLoggedIn(data.isLoggedIn);
+        setUserData(data.user);
       } else {
         setIsLoggedIn(false);
       }
@@ -92,6 +104,15 @@ const Services = () => {
     // Call the function to check login status when the component mounts
     checkLoginStatus();
   }, []);
+
+  // Function to handle form input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setNewAppointment(prevAppointment => ({
+      ...prevAppointment,
+      [name]: value
+    }));
+  };  
 
   const fetchServices = async () => {
     try {
@@ -130,6 +151,46 @@ const Services = () => {
     }
   };
 
+  const addAppointment = async () => {
+    try {
+      const requestData = {
+        date: newAppointment.date,
+        time: newAppointment.time,
+        customer_id: userData.user_id,
+        service_id: selectedService.service_id,
+        message: newAppointment.message
+      };
+
+      // Log the data being sent
+      //console.log('Sending appointment data:', requestData);
+
+      // Sending the form data in the request body
+      const response = await fetch('http://localhost:5000/set-appointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData),
+      });
+    
+      // Handling the response
+      if (!response.ok) {
+        throw new Error('Failed to set an appointment');
+      }
+  
+      // Clearing the form fields after setting an appointment
+      setNewAppointment({
+        date: '',
+        time: '',
+        customer_id: '',
+        service_id: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error setting an appointment:', error);
+    }
+  };  
+  
   return (
     <main>
       <section>
@@ -182,41 +243,64 @@ const Services = () => {
           <div className="bg-light p-8 rounded-lg overflow-auto">
             <h2 className="text-3xl  mb-6 text-center font-palanquin font-semibold">Reservation Form</h2>
             <form className="grid grid-cols-2 gap-4">
+              <input type="hidden" name="service_id" value={selectedService.service_id} />
+              {/* <input type="hidden" name="customer_id" value={customerId} /> */}
               <div>
                 <div className="mb-4">
-                  <label htmlFor="name" className="block text-sm font-medium text-dark">Name</label>
-                  <input type="text" id="name" name="name" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md p-2" />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="email" className="block text-sm font-medium text-dark">Email</label>
-                  <input type="email" id="email" name="email" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="phone" className="block text-sm font-medium text-dark">Phone Number</label>
-                  <input type="tel" id="phone" name="phone" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                  <label htmlFor="service" className="block text-sm font-medium text-dark">Service</label>
+                  <input 
+                    type="text" 
+                    id="service" 
+                    name="service" 
+                    value={selectedService.service_name} 
+                    readOnly 
+                    className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" 
+                    />
                 </div>
                 <div className="mb-4">
                   <label htmlFor="date" className="block text-sm font-medium text-dark">Date</label>
-                  <input type="date" id="date" name="date" className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                  <input 
+                    type="date" 
+                    id="date" 
+                    name="date" 
+                    value={newAppointment.date}
+                    onChange={handleChange}
+                    className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" 
+                  />
                 </div>
               </div>
               <div>
                 <div className="mb-4">
-                  <label htmlFor="service" className="block text-sm font-medium text-dark">Service</label>
-                  <input type="text" id="service" name="service" value={selectedService.service_name} readOnly className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
-                </div>
-                <div className="mb-4">
                   <label htmlFor="price" className="block text-sm font-medium text-dark">Price</label>
-                  <input type="text" id="price" name="price" value={`PHP ${selectedService.price}`} readOnly className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                  <input 
+                    type="text" 
+                    id="price" 
+                    name="price" 
+                    value={`PHP ${selectedService.price}`} 
+                    readOnly 
+                    className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
                 </div>
                 <div className="mb-4">
                   <label htmlFor="time" className="block text-sm font-medium text-dark">Time</label>
-                  <input type="time" id="time" name="time" className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
+                  <input 
+                    type="time" 
+                    id="time" 
+                    name="time" 
+                    value={newAppointment.time}
+                    onChange={handleChange}
+                    className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
                 </div>
               </div>
               <div className="col-span-2 mb-4">
                 <label htmlFor="message" className="block text-sm font-medium text-dark">Message</label>
-                <textarea id="message" name="message" rows="3" className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2"></textarea>
+                <textarea 
+                  id="message" 
+                  name="message" 
+                  rows="3" 
+                  value={newAppointment.message}
+                  onChange={handleChange}
+                  className="mt-1  block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2"
+                />
               </div>
               <div className="col-span-2 flex justify-end">
                 <button
@@ -227,7 +311,8 @@ const Services = () => {
                   Close
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={addAppointment}
                   className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                 >
                   Reserve Now

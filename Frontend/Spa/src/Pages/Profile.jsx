@@ -439,7 +439,9 @@ const Profile = () => {
                 <p className="text-gray-300"><strong>Name:</strong> {appointment.name}</p>
                 <p className="text-gray-300"><strong>Schedule:</strong> {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
                 <p className="text-gray-300"><strong>Total:</strong> {appointment.price_final}</p>
-                <p className="text-gray-300"><strong>Status:</strong> {appointment.request_status ? 'Approved' : 'Pending'}</p>
+                <p className="text-gray-300">
+                  <strong>Status:</strong> {appointment.request_status === 1 ? 'Approved' : appointment.request_status === 2 ? 'Declined' : 'Pending'}
+                </p>
                 {appointment.request_status === 1 && appointment.payment_status === 0 && (
                   <button className="bg-green-500 text-white rounded px-2 py-1 mt-2" onClick={() => handlePayment(index)}>Pay</button>
                 )}

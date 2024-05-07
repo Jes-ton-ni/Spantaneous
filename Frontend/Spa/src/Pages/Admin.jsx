@@ -227,7 +227,7 @@ const Admin = () => {
     );
   };
   
-  
+
   const UsersContent = () => {
     const [activeTab, setActiveTab] = useState('clients'); // State to track active tab
     const [searchQuery, setSearchQuery] = useState(''); // State to track search query
@@ -503,7 +503,6 @@ const Admin = () => {
         formData.append('category', newService.category);
         formData.append('image', newService.image);
         formData.append('image_path', newService.image_path); // Include image path in the FormData
-
         const response = await fetch('http://localhost:5000/services', {
           method: 'POST',
           body: formData,
@@ -694,7 +693,10 @@ const Admin = () => {
             onChange={handleImageUpload}
             className="mr-2"
           />
-          <button type="button" onClick={addService} className="px-4 py-2 bg-dark hover:bg-dark/90 text-white rounded">Add Service</button>
+          <button 
+            type="button" 
+            onClick={addService} 
+            className="px-4 py-2 bg-dark hover:bg-dark/90 text-white rounded">Add Service</button>
         </form>
   
         {/* Service list */}
