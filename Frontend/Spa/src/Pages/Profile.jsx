@@ -10,17 +10,8 @@ const Profile = () => {
   const [appointments, setUserAppointments] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [userData, setUserData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    email: '',
-    contact: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmNewPassword: ''
-  });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
   
   // Function to check login status and user data
   const checkLoginStatus = async () => {
@@ -35,16 +26,7 @@ const Profile = () => {
         setIsLoggedIn(data.isLoggedIn);
         // Set userData state
         if (data.isLoggedIn) {
-          setUserData({
-            firstName: data.user.Fname || '',
-            lastName: data.user.Lname || '',
-            username: data.user.username || '',
-            email: data.user.email || '',
-            contact: data.user.contact || '',
-            currentPassword: '',
-            newPassword: '',
-            confirmNewPassword: ''
-          });
+          setUserData(data.user);
         }
       } else {
         // If response is not ok, set isLoggedIn to false
@@ -162,11 +144,11 @@ const Profile = () => {
               {alertMessage}
             </div>
           )}
-          <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {userData.firstName}!</h2>
+          <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {userData.Fname}!</h2>
           <div className="mb-4 space-y-2">
             <h2 className='text-2xl font-palanquin font-bold'>Profile Information:</h2>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {userData.firstName}</p>
-            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {userData.lastName}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {userData.Fname}</p>
+            <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {userData.Lname}</p>
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {userData.username}</p>
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {userData.email}</p>
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {userData.contact}</p>
@@ -203,7 +185,7 @@ const Profile = () => {
                       type="text"
                       name="firstName"
                       placeholder="First Name"
-                      defaultValue={userData.firstName}
+                      defaultValue={userData.Fname}
                       onChange={handleChange}
                     />
                   </div>
@@ -217,7 +199,7 @@ const Profile = () => {
                       type="text"
                       name="lastName"
                       placeholder="Last Name"
-                      defaultValue={userData.lastName}
+                      defaultValue={userData.Lname}
                       onChange={handleChange}
                     />
                   </div>

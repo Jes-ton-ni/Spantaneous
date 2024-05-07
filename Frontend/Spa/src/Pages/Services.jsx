@@ -226,7 +226,7 @@ const Services = () => {
                 {services[category].map((service, serviceIndex) => (
                   <div key={serviceIndex} className="bg-white rounded-lg shadow-md p-6">
                     <img src={`http://localhost:5000/${service.image_path}`} alt={service.service_name} className="w-full h-[20rem] bg-gray-300 mb-4 rounded-lg bg-cover bg-center" />
-                    <h3 className="text-lg font-semibold mb-2">{service.name}</h3>
+                    <h3 className="text-lg font-semibold mb-2">{service.service_name}</h3>
                     <p className="text-gray-800">{service.description}</p>
                     <p className="text-gray-600 mt-2">Price: PHP {service.price}</p>
                     <button onClick={() => { handleServiceSelect(service); handleReserveClick();}} className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out">Reserve</button>
