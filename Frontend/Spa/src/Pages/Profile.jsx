@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Nav from '../components/Nav';
 import Footer from '../sections/Footer';
 import bg from '../assets/img/back.jpg'; 
+// import { useHistory } from 'react-router-dom'; // npm install react-router-dom
 
 const Profile = () => {
   const [showModal, setShowModal] = useState(false);
@@ -13,6 +14,8 @@ const Profile = () => {
   const [userData, setUserData] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   
+  // const history = useHistory();
+
   // Function to check login status and user data
   const checkLoginStatus = async () => {
     try {
@@ -24,10 +27,6 @@ const Profile = () => {
         const data = await response.json();
         // Set isLoggedIn state
         setIsLoggedIn(data.isLoggedIn);
-        // Set userData state
-        if (data.isLoggedIn) {
-          setUserData(data.user);
-        }
       } else {
         // If response is not ok, set isLoggedIn to false
         setIsLoggedIn(false);
@@ -43,10 +42,85 @@ const Profile = () => {
     checkLoginStatus();
   }, []);
 
+  // Redirect to login page if user is not logged in
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      window.location.href = '/login';
+    }
+  }, [isLoggedIn]);
+
+  // Function to check login status and user data
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get-userData', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Set isLoggedIn state
+        setUserData(data.userData);
+      } else {
+        console.error('Failed to fetch user data:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      // Handle error, e.g., show an error message to the user
+    }
+  }; 
+
+  useEffect(() => {
+    fetchUserData();
+  })
+
   const toggleModal = () => {
     setShowModal(!showModal);
   };
 
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserData(prevFields => ({
+      ...prevFields,
+      [name]: value
+    }));
+  };
+  
+  const UpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+
+      // Send the user data to the backend
+      const response = await fetch('http://localhost:5000/update-profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateFields),
+      });
+  
+      // Check if the request was successful
+      if (response.ok) {
+        // If successful, close the modal and show success message
+        toggleModal();
+        setAlertMessage("You have successfully updated your profile!");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
+        fetchUserData();
+      } else {
+        // If there was an error, log it
+        console.error('Failed to update profile:', response.statusText);
+        // Optionally, show an error message to the user
+        setAlertMessage("Failed to update profile. Please try again later.");
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      // Optionally, show an error message to the user
+      setAlertMessage("Failed to update profile. Please try again later.");
+    }
+  };
+  
   const togglePasswordModal = () => {
     setShowPasswordModal(!showPasswordModal);
   };
@@ -54,24 +128,7 @@ const Profile = () => {
   const togglePaymentModal = () => {
     setShowPaymentModal(!showPaymentModal);
   };
-
-  const handleChange = (e) => {
-    setUserData({
-      ...userData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(userData);
-    toggleModal();
-    setAlertMessage("You have successfully updated your profile!");
-    setTimeout(() => {
-      setAlertMessage("");
-    }, 3000);
-  };
-
+  
   const handlePasswordChange = (e) => {
     e.preventDefault();
     console.log('Changing password...');
@@ -124,6 +181,28 @@ const Profile = () => {
     setUserAppointments(appointment);
   }, [bookings]);
 
+  const handleLogout = async (e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    try {
+      const response = await fetch('http://localhost:5000/logout', {
+        method: 'POST',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        // Logout successful
+        console.log('Logout successful');
+        // Redirect to the login page
+        window.location.href = '/login';
+      } else {
+        // Logout failed
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      // Handle error, display error message or any appropriate action
+    }
+  };
+
   return (
     <main>
       <section>
@@ -159,7 +238,12 @@ const Profile = () => {
             <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={togglePasswordModal}>Change Password</button>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-center">
-            <button className="bg-red-500 text-white px-4 py-2 rounded-md">Logout</button>
+            <button 
+              className="bg-red-500 text-white px-4 py-2 rounded-md"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
           </div>
         </div>
         
@@ -174,18 +258,18 @@ const Profile = () => {
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
-                <form onSubmit={handleSubmit}>
+                <form>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName">
                       First Name
                     </label>
                     <input
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="firstName"
+                      
                       type="text"
-                      name="firstName"
+                      name="Fname"
                       placeholder="First Name"
-                      defaultValue={userData.Fname}
+                      value={userData.Fname}
                       onChange={handleChange}
                     />
                   </div>
@@ -197,9 +281,9 @@ const Profile = () => {
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="lastName"
                       type="text"
-                      name="lastName"
+                      name="Lname"
                       placeholder="Last Name"
-                      defaultValue={userData.Lname}
+                      value={userData.Lname}
                       onChange={handleChange}
                     />
                   </div>
@@ -213,7 +297,7 @@ const Profile = () => {
                       type="text"
                       name="username"
                       placeholder="Username"
-                      defaultValue={userData.username}
+                      value={userData.username}
                       onChange={handleChange}
                     />
                   </div>
@@ -227,7 +311,7 @@ const Profile = () => {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      defaultValue={userData.email}
+                      value={userData.email}
                       onChange={handleChange}
                     />
                   </div>
@@ -241,7 +325,7 @@ const Profile = () => {
                       type="text"
                       name="contact"
                       placeholder="Contact"
-                      defaultValue={userData.contact}
+                      value={userData.contact}
                       onChange={handleChange}
                     />
                   </div>
@@ -254,7 +338,8 @@ const Profile = () => {
                       Cancel
                     </button>
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={UpdateProfile}
                       className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                     >
                       Update

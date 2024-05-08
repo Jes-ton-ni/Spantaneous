@@ -11,7 +11,7 @@ const Nav = () => {
   const navRef = useRef();
   const [showDropdown, setShowDropdown] = useState(false); // State for dropdown visibility
   const location = useLocation();
-  const [username, setUsername] = useState('');
+  const [userData, setUserData] = useState('');
 
   useEffect(() => {
     // Update activeLink when location changes
@@ -83,14 +83,14 @@ const Nav = () => {
   }, []);
 
   // Fetch username from the server
-  const fetchUsername = async () => {
+  const fetchUserData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/get-username', {
+      const response = await fetch('http://localhost:5000/get-userData', {
         method: 'GET',
         credentials: 'include' // Include cookies in the request
       });
       const data = await response.json();
-      setUsername(data.username);
+      setUserData(data.userData);
     } catch (error) {
       console.error('Error fetching username:', error);
     }
@@ -99,7 +99,7 @@ const Nav = () => {
   useEffect(() => {
     // Fetch username if user is logged in
     if (isLoggedIn) {
-      fetchUsername();
+      fetchUserData();
     }
   }, [isLoggedIn]);
 
@@ -131,7 +131,7 @@ const Nav = () => {
           <div className="relative" onClick={toggleDropdown}>
             <div className="flex items-center justify-center hover:bg-gray-300 duration-500 text-dark text-xs font-semibold cursor-pointer px-3 py-2 rounded-md">
               <img src={User} alt="User Profile" className="w-6 h-6 mr-2" />
-              <span>{username}</span>
+              <span>{userData.username}</span>
             </div>
             {/* Dropdown content */}
             {showDropdown && (
@@ -185,7 +185,10 @@ const Nav = () => {
                 {showDropdown && (
                   <div className="absolute bg-white right-0 mt-2 rounded-md shadow-lg z-20">
                     <a href="/profile" className="block px-4 py-2 text-gray-800 hover:bg-gray-200">Profile</a>
-                    <a href="#!" className="block px-4 py-2 text-gray-800 hover:bg-gray-200" onClick={handleLogout}>
+                    <a 
+                      href="#!" 
+                      className="block px-4 py-2 text-gray-800 hover:bg-gray-200" 
+                      onClick={handleLogout}>
                       Logout
                     </a>
                   </div>

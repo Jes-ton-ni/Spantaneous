@@ -5,6 +5,7 @@ import { animateScroll as scroll } from 'react-scroll';
 import Nav from '../components/Nav';
 import bg from '../assets/img/back.jpg';
 import Footer from '../sections/Footer';
+import swal from 'sweetalert';
 import Swal from 'sweetalert2';
 import React, { useState, useEffect } from 'react';
 
@@ -175,7 +176,25 @@ const Services = () => {
     
       // Handling the response
       if (!response.ok) {
-        throw new Error('Failed to set an appointment');
+        swal({
+          title: 'Failed! ',
+          text: 'Field with * should not be empty.',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
+        //throw new Error('Failed to set an appointment');
+      }
+      else if (response.ok) {
+        swal({
+          title: 'Success!',
+          text: ' ',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        }).then(() => {   
+          setIsModalOpen(false);
+        });
       }
   
       // Clearing the form fields after setting an appointment
@@ -237,7 +256,7 @@ const Services = () => {
           ))}
         </Tabs>
       </section>
-      {/* Modal */}
+      {/* Modal for reservation */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-light p-8 rounded-lg overflow-auto">
@@ -258,7 +277,10 @@ const Services = () => {
                     />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="date" className="block text-sm font-medium text-dark">Date</label>
+                  <label htmlFor="date" className="block text-sm font-medium text-dark">
+                    Date
+                    <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input 
                     type="date" 
                     id="date" 
@@ -281,7 +303,10 @@ const Services = () => {
                     className="mt-1 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-md  p-2" />
                 </div>
                 <div className="mb-4">
-                  <label htmlFor="time" className="block text-sm font-medium text-dark">Time</label>
+                  <label htmlFor="time" className="block text-sm font-medium text-dark">
+                    Time
+                    <span style={{ color: 'red' }}>*</span>
+                  </label>
                   <input 
                     type="time" 
                     id="time" 

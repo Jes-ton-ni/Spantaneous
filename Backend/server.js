@@ -96,12 +96,7 @@ app.post('/login', (req, res) => {
         if (passwordMatch) {
           // Set user data in the session upon successful login
           req.session.user = {
-            user_id: user.user_id,
-            username: user.username,
-            Fname: user.Fname,
-            Lname: user.Lname,
-            contact: user.contact,
-            email: user.email
+            user_id: user.user_id
           };
           console.log('User logged in:', req.session.user); // Log session use
           return res.json({ success: true, message: 'Login successful' });
@@ -138,14 +133,58 @@ app.get('/check-login', (req, res) => {
   });
 });
 
-// Endpoint to get username from session
-app.get('/get-username', (req, res) => {
-  // Check if user is logged in and session contains username
-  if (req.session.user && req.session.user.username) {
-    const { username } = req.session.user;
-    return res.json({ success: true, username });
+// Endpoint to get userData from users table based on user_id
+app.get('/get-userData', (req, res) => {
+  // Check if user is logged in and session contains user_id
+  if (req.session.user && req.session.user.user_id) {
+    const userId = req.session.user.user_id;
+    const sql = 'SELECT user_id, Fname, Lname, username, contact, email FROM users WHERE user_id = ?';
+
+    connection.query(sql, [userId], (err, results) => {
+      if (err) {
+        console.error('Error fetching user data:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+      if (results.length > 0) {
+        const userData = results[0];
+        return res.json({ success: true, userData });
+      } else {
+        return res.status(404).json({ success: false, message: 'User data not found' });
+      }
+    });
   } else {
+    // If user is not authenticated or session user_id is not set
     return res.status(401).json({ success: false, message: 'User not authenticated' });
+  }
+});
+
+
+// Endpoint for updating user profile
+app.put('/update-profile', async (req, res) => {
+  try {
+    // Retrieve updated user profile data from the request body
+    const { user_id, Fname, Lname, username, email, contact } = req.body;
+
+    console.log('Received Updated Profile request:', req.body);
+
+    // Update the user profile in the database
+    const sql = 'UPDATE users SET Fname = ?, Lname = ?, username = ?, email = ?, contact = ? WHERE user_id = ?';
+    connection.query(sql, [Fname, Lname, username, email, contact, user_id], (err, results) => {
+      if (err) {
+        console.error('Error updating profile:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+
+      // Check if the user profile was successfully updated
+      if (results.affectedRows > 0) {
+        return res.json({ success: true, message: 'Profile updated successfully' });
+      } else {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
