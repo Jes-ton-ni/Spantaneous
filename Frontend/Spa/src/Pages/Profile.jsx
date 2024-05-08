@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Nav from '../components/Nav';
 import Footer from '../sections/Footer';
 import bg from '../assets/img/back.jpg'; 
-// import { useHistory } from 'react-router-dom'; // npm install react-router-dom
 
 const Profile = () => {
   const [showModal, setShowModal] = useState(false);
@@ -12,12 +11,12 @@ const Profile = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [userData, setUserData] = useState([]);
+  const [userUpdate, setUserUpdate] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(null);
-  
-  // const history = useHistory();
+  const [alertMessage, setAlertMessage] = useState("");
 
   // Function to check login status and user data
-  const checkLoginStatus = async () => {
+  const checkLoginStatus = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/check-login', {
         method: 'GET',
@@ -35,12 +34,12 @@ const Profile = () => {
       console.error('Error checking login status:', error);
       // Handle error, e.g., show an error message to the user
     }
-  }; 
+  }, []); 
   
   useEffect(() => {
     // Call the function to check login status when the component mounts
     checkLoginStatus();
-  }, []);
+  }, [checkLoginStatus]);
 
   // Redirect to login page if user is not logged in
   useEffect(() => {
@@ -49,8 +48,8 @@ const Profile = () => {
     }
   }, [isLoggedIn]);
 
-  // Function to check login status and user data
-  const fetchUserData = async () => {
+  // Function to fetch user data
+  const fetchUserData = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/get-userData', {
         method: 'GET',
@@ -65,22 +64,27 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error checking login status:', error);
-      // Handle error, e.g., show an error message to the user
+      // Handle error
     }
-  }; 
+  }, []); 
 
   useEffect(() => {
     fetchUserData();
-  })
+  }, [fetchUserData])
 
-  const toggleModal = () => {
-    setShowModal(!showModal);
-  };
+  const openModal = (userData) => {
+    setUserUpdate(userData);
+    setShowModal(true);
+  }
 
+  const closeModal = () => {
+    setUserUpdate(null);
+    setShowModal(false);
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData(prevFields => ({
+    setUserUpdate(prevFields => ({
       ...prevFields,
       [name]: value
     }));
@@ -96,18 +100,19 @@ const Profile = () => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(updateFields),
+        body: JSON.stringify(userUpdate),
       });
   
       // Check if the request was successful
       if (response.ok) {
         // If successful, close the modal and show success message
-        toggleModal();
+        closeModal();
         setAlertMessage("You have successfully updated your profile!");
         setTimeout(() => {
           setAlertMessage("");
         }, 3000);
         fetchUserData();
+        fetchAppointments();
       } else {
         // If there was an error, log it
         console.error('Failed to update profile:', response.statusText);
@@ -125,10 +130,6 @@ const Profile = () => {
     setShowPasswordModal(!showPasswordModal);
   };
 
-  const togglePaymentModal = () => {
-    setShowPaymentModal(!showPaymentModal);
-  };
-  
   const handlePasswordChange = (e) => {
     e.preventDefault();
     console.log('Changing password...');
@@ -146,12 +147,14 @@ const Profile = () => {
     }, 3000);
   };
 
+  const togglePaymentModal = () => {
+    setShowPaymentModal(!showPaymentModal);
+  };
+  
   const handlePayment = (index) => {
     setShowPaymentModal(true);
     setSelectedAppointment(appointments[index]);
   };
-
-  const [alertMessage, setAlertMessage] = useState("");
 
   // Define a function to fetch appointments from the server
   const fetchAppointments = async () => {
@@ -231,7 +234,7 @@ const Profile = () => {
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {userData.username}</p>
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {userData.email}</p>
             <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {userData.contact}</p>
-            <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={toggleModal}>Update Profile</button>
+            <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={() => openModal(userData)}>Update Profile</button>
           </div>
           <div className="mb-4 space-y-2">
             <h2 className='text-2xl font-palanquin font-bold'>Password and Security:</h2>
@@ -254,7 +257,7 @@ const Profile = () => {
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
                   <p className="text-2xl font-semibold">Update Profile</p>
-                  <button className="modal-close" onClick={toggleModal}>
+                  <button className="modal-close" onClick={closeModal}>
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
@@ -269,7 +272,7 @@ const Profile = () => {
                       type="text"
                       name="Fname"
                       placeholder="First Name"
-                      value={userData.Fname}
+                      value={userUpdate.Fname}
                       onChange={handleChange}
                     />
                   </div>
@@ -283,7 +286,7 @@ const Profile = () => {
                       type="text"
                       name="Lname"
                       placeholder="Last Name"
-                      value={userData.Lname}
+                      value={userUpdate.Lname}
                       onChange={handleChange}
                     />
                   </div>
@@ -297,7 +300,7 @@ const Profile = () => {
                       type="text"
                       name="username"
                       placeholder="Username"
-                      value={userData.username}
+                      value={userUpdate.username}
                       onChange={handleChange}
                     />
                   </div>
@@ -311,7 +314,7 @@ const Profile = () => {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      value={userData.email}
+                      value={userUpdate.email}
                       onChange={handleChange}
                     />
                   </div>
@@ -325,7 +328,7 @@ const Profile = () => {
                       type="text"
                       name="contact"
                       placeholder="Contact"
-                      value={userData.contact}
+                      value={userUpdate.contact}
                       onChange={handleChange}
                     />
                   </div>
@@ -333,7 +336,7 @@ const Profile = () => {
                     <button
                       type="button"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                      onClick={toggleModal}
+                      onClick={closeModal}
                     >
                       Cancel
                     </button>
