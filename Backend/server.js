@@ -158,14 +158,13 @@ app.get('/get-userData', (req, res) => {
   }
 });
 
-
 // Endpoint for updating user profile
 app.put('/update-profile', async (req, res) => {
   try {
     // Retrieve updated user profile data from the request body
     const { user_id, Fname, Lname, username, email, contact } = req.body;
 
-    console.log('Received Updated Profile request:', req.body);
+    //console.log('Received Updated Profile request:', req.body);
 
     // Update the user profile in the database
     const sql = 'UPDATE users SET Fname = ?, Lname = ?, username = ?, email = ?, contact = ? WHERE user_id = ?';
@@ -188,11 +187,67 @@ app.put('/update-profile', async (req, res) => {
   }
 });
 
+// Endpoint for updating user password
+app.put('/update-password', async (req, res) => {
+  try {
+    // Retrieve updated user password data from the request body
+    const { user_id, currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    console.log('Received Updated Password request:', req.body);
+
+    // Check if newPassword and confirmPassword are equal
+    if (!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New password and confirm password do not match or are empty" });
+    }
+
+    // Fetch the hashed password of the user from the database
+    const sql = 'SELECT password FROM users WHERE user_id = ?';
+    connection.query(sql, [user_id], async (err, results) => {
+      if (err) {
+        console.error('Error fetching user password:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      const user = results[0];
+      const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update the user password in the database
+      const updateSql = 'UPDATE users SET password = ? WHERE user_id = ?';
+      connection.query(updateSql, [hashedPassword, user_id], (err, updateResults) => {
+        if (err) {
+          console.error('Error updating password:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+
+        if (updateResults.affectedRows > 0) {
+          return res.json({ success: true, message: 'Password Changed Successfully' });
+        } else {
+          return res.status(500).json({ success: false, message: 'Failed to update password' });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Signup Endpoint
 app.post('/signup', async (req, res) => {
   const { username, password, firstName, lastName, phone, email } = req.body;
 
-  console.log('Received signup request:', req.body);
+  //console.log('Received signup request:', req.body);
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);

@@ -12,6 +12,12 @@ const Profile = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [userData, setUserData] = useState([]);
   const [userUpdate, setUserUpdate] = useState(null);
+  const [changePassword, setChangePassword] = useState({
+    user_id: null,
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(null);
   const [alertMessage, setAlertMessage] = useState("");
 
@@ -71,16 +77,39 @@ const Profile = () => {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData])
+  
+  // Define a function to fetch appointments from the server
+  const fetchAppointments = async () => {
+    try {
+      // Make a GET request to the /appointments endpoint
+      const response = await fetch('http://localhost:5000/appointments');
+      if (!response.ok) {
+        throw new Error('Failed to fetch appointments');
+      }
+      const data = await response.json();
+      // Update the bookings state with the fetched appointments
+      setBookings(data.appointments);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
+  // Call the fetchAppointments function when the component mounts
+  useEffect(() => {
+    fetchAppointments();
+    return () => {
+    };
+  }, []);
 
   const openModal = (userData) => {
     setUserUpdate(userData);
     setShowModal(true);
-  }
+  };
 
   const closeModal = () => {
     setUserUpdate(null);
     setShowModal(false);
-  }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -126,25 +155,58 @@ const Profile = () => {
     }
   };
   
-  const togglePasswordModal = () => {
-    setShowPasswordModal(!showPasswordModal);
+  const openPassModal = () => {
+    // Check if userData is not empty and set the user_id in changePassword state
+  if (userData && userData.user_id) {
+    setChangePassword(prevState => ({
+      ...prevState,
+      user_id: userData.user_id
+    }));
+  }
+    setShowPasswordModal(true);
   };
 
-  const handlePasswordChange = (e) => {
+  const closePassModal = () => {
+    setShowPasswordModal(false);
+  };
+
+  const handleChangePassword = (e) => {
+    const { name, value } = e.target;
+    setChangePassword(prevFields => ({
+      ...prevFields,
+      [name]: value
+    }));
+  };
+
+  const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    console.log('Changing password...');
-    console.log(formDauserDatata);
-    setFormData({
-      ...userData,
-      currentPassword: '',
-      newPassword: '',
-      confirmNewPassword: ''
-    });
-    togglePasswordModal();
-    setAlertMessage("Password changed successfully!");
-    setTimeout(() => {
-      setAlertMessage("");
-    }, 3000);
+    try {
+
+      // Send the data to the backend
+      const response = await fetch('http://localhost:5000/update-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(changePassword),
+      });
+
+      if (response.ok) {
+        closePassModal();
+        setAlertMessage("Password changed successfully!");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
+      } else {
+        console.error('Failed to change password:', response.statusText);
+        // Optionally, show an error message to the user
+        setAlertMessage("Failed to change password. Please try again later.");
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      // Optionally, show an error message to the user
+      setAlertMessage("Failed to change password. Please try again later.");
+    }
   };
 
   const togglePaymentModal = () => {
@@ -155,29 +217,6 @@ const Profile = () => {
     setShowPaymentModal(true);
     setSelectedAppointment(appointments[index]);
   };
-
-  // Define a function to fetch appointments from the server
-  const fetchAppointments = async () => {
-    try {
-      // Make a GET request to the /appointments endpoint
-      const response = await fetch('http://localhost:5000/appointments');
-      if (!response.ok) {
-        throw new Error('Failed to fetch appointments');
-      }
-      const data = await response.json();
-      // Update the bookings state with the fetched appointments
-      setBookings(data.appointments);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-    }
-  };
-
-  // Call the fetchAppointments function when the component mounts
-  useEffect(() => {
-    fetchAppointments();
-    return () => {
-    };
-  }, []);
 
   useEffect(() => {
     const appointment = bookings.filter(booking => booking.customer_id === userData.user_id );
@@ -238,7 +277,7 @@ const Profile = () => {
           </div>
           <div className="mb-4 space-y-2">
             <h2 className='text-2xl font-palanquin font-bold'>Password and Security:</h2>
-            <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={togglePasswordModal}>Change Password</button>
+            <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={openPassModal}>Change Password</button>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-center">
             <button 
@@ -361,11 +400,11 @@ const Profile = () => {
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
                   <p className="text-2xl font-semibold">Change Password</p>
-                  <button className="modal-close" onClick={togglePasswordModal}>
+                  <button className="modal-close" onClick={closePassModal}>
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
-                <form onSubmit={handlePasswordChange}>
+                <form onSubmit={handleUpdatePassword}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currentPassword">
                       Current Password
@@ -376,8 +415,8 @@ const Profile = () => {
                       type="password"
                       name="currentPassword"
                       placeholder="Current Password"
-                      value={userData.currentPassword}
-                      onChange={handleChange}
+                      value={changePassword.currentPassword}
+                      onChange={handleChangePassword}
                     />
                   </div>
                   <div className="mb-4">
@@ -390,8 +429,8 @@ const Profile = () => {
                       type="password"
                       name="newPassword"
                       placeholder="New Password"
-                      value={userData.newPassword}
-                      onChange={handleChange}
+                      value={changePassword.newPassword}
+                      onChange={handleChangePassword}
                     />
                   </div>
                   <div className="mb-4">
@@ -404,15 +443,15 @@ const Profile = () => {
                       type="password"
                       name="confirmNewPassword"
                       placeholder="Confirm New Password"
-                      value={userData.confirmNewPassword}
-                      onChange={handleChange}
+                      value={changePassword.confirmNewPassword}
+                      onChange={handleChangePassword}
                     />
                   </div>
                   <div className="flex items-center justify-end">
                     <button
                       type="button"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                      onClick={togglePasswordModal}
+                      onClick={closePassModal}
                     >
                       Cancel
                     </button>
@@ -508,7 +547,7 @@ const Profile = () => {
                 <h3 className="font-semibold text-lg text-white">{appointment.service}</h3>
                 <p className="text-gray-300"><strong>Name:</strong> {appointment.name}</p>
                 <p className="text-gray-300"><strong>Schedule:</strong> {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
-                <p className="text-gray-300"><strong>Total:</strong> {appointment.price_final}</p>
+                <p className="text-gray-300"><strong>Total:</strong> PHP {appointment.price_final}</p>
                 <p className="text-gray-300">
                   <strong>Status:</strong> {appointment.request_status === 1 ? 'Approved' : appointment.request_status === 2 ? 'Declined' : 'Pending'}
                 </p>
