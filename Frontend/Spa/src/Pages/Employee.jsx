@@ -403,66 +403,87 @@ const Employee = () => {
   };
   
   const Appointment = () => {
-    const appointments = [
-      {
-        name: 'John Doe',
-        email: 'johndoe@example.com',
-        phone: '123-456-7890',
-        service: 'Swedish Massage',
-        date: '2024-04-25',
-        time: '10:00 AM',
-        message: 'I would like to request a male therapist.'
-      },
-      {
-        name: 'Jane Smith',
-        email: 'janesmith@example.com',
-        phone: '987-654-3210',
-        service: 'Deep Tissue Massage',
-        date: '2024-04-27',
-        time: '2:00 PM',
-        message: 'No specific requests.'
-      },
-      {
-        name: 'Jane Smith',
-        email: 'janesmith@example.com',
-        phone: '987-654-3210',
-        service: 'Deep Tissue Massage',
-        date: '2024-04-27',
-        time: '2:00 PM',
-        message: 'No specific requests.'
-      },
-      {
-        name: 'Jane Smith',
-        email: 'janesmith@example.com',
-        phone: '987-654-3210',
-        service: 'Deep Tissue Massage',
-        date: '2024-04-27',
-        time: '2:00 PM',
-        message: 'No specific requests.'
-      },
-      
-    ];
-  
+    const [appointments, setAppointments] = useState([]);
+    const [pendingAppointment, setPendingAppointment] = useState([]);
+
+     // Define a function to fetch appointments from the server
+     const fetchAppointments = async () => {
+      try {
+        // Make a GET request to the /appointments endpoint
+        const response = await fetch('http://localhost:5000/appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+        const data = await response.json();
+        // Update the bookings state with the fetched appointments
+        setAppointments(data.appointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    // Call the fetchAppointments function when the component mounts
+    useEffect(() => {
+      fetchAppointments();
+      return () => {
+      };
+    }, []);
+
+    useEffect(() => {
+      const pendingAppointment = appointments.filter(appointment => appointment.request_status === 0  );
+      //const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
+      setPendingAppointment(pendingAppointment);
+     // setAppointmentAccepted(acceptedAppointment);
+    }, [appointments])
+
+    const handleDeclined = async (appointmentId) => {
+      try {
+        // Make a PUT request to update the request status to 3 (declined)
+        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/request-status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ request_status: 2 }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update request status');
+        }
+
+        // Remove the declined booking from the local state
+        setPendingAppointment(pendingAppointment.filter(appointment => appointment.appointment_id !== appointmentId));
+      } catch (error) {
+        console.error('Error declining appointment:', error);
+      }
+    };
+    
     return (
       <div className='container mx-auto'>
         <h2 className='text-4xl font-semibold text-center mb-9'>Appointments</h2>
         <div className='flex items-center justify-center'>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-screen overflow-y-auto">
-            {appointments.map((appointment, index) => (
+            {pendingAppointment.map((appointment, index) => (
               <div key={index} className="p-4 border rounded-lg shadow-md bg-light">
                 <h3 className="text-lg font-bold mb-2">Appointment {index + 1}</h3>
                 <p><span className="font-medium">Name:</span> {appointment.name}</p>
                 <p><span className="font-medium">Email:</span> {appointment.email}</p>
-                <p><span className="font-medium">Phone:</span> {appointment.phone}</p>
+                <p><span className="font-medium">Phone:</span> {appointment.contact}</p>
                 <p><span className="font-medium">Service:</span> {appointment.service}</p>
-                <p><span className="font-medium">Date:</span> {appointment.date}</p>
-                <p><span className="font-medium">Time:</span> {appointment.time}</p>
-                <p><span className="font-medium">Message:</span> {appointment.message}</p>
+                <p><span className="font-medium">Date:</span> {new Date(appointment.date_appointed).toLocaleDateString()}</p>
+                <p><span className="font-medium">Time:</span> {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
+                <p><span className="font-medium">Message:</span> {appointment.message || 'No message'}</p>
                 <div className=' flex gap-4 '> 
-                <button className="mt-4 px-4 py-2 bg-dark text-white rounded-md hover:bg-dark/90 duration-300 ">
+                <button 
+                  className="mt-4 px-4 py-2 bg-dark text-white rounded-md hover:bg-dark/90 duration-300 "
+                  onClick={() => handleAccept(appointment.appointment_id)}
+                >
                   Accept
                 </button>
-                <button className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-800 duration-300 text-end ">
+                <button 
+                  className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-800 duration-300 text-end "
+                  onClick={() => handleDeclined(appointment.appointment_id)}
+                >
                   Decline
                 </button>
                 </div>
@@ -476,31 +497,7 @@ const Employee = () => {
   
   
   const Tasks = () => {
-    const [pendingTasks, setPendingTasks] = useState([
-      {
-        id: 1,
-        name: 'John Doe',
-        email: 'johndoe@example.com',
-        phone: '123-456-7890',
-        service: 'Swedish Massage',
-        date: '2024-04-25',
-        time: '10:00 AM',
-        message: 'I would like to request a male therapist.',
-        paid: false,
-      },
-      {
-        id: 2,
-        name: 'Jane Doe',
-        email: 'janedoe@example.com',
-        phone: '987-654-3210',
-        service: 'Deep Tissue Massage',
-        date: '2024-04-26',
-        time: '2:00 PM',
-        message: 'No specific instructions.',
-        paid: false,
-      },
-    ]);
-  
+    const [pendingTasks, setPendingTasks] = useState([]);
     const [completedTasks, setCompletedTasks] = useState([]);
     const [completedFilter, setCompletedFilter] = useState({
       date: '',
@@ -511,6 +508,27 @@ const Employee = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('');
+
+    const fetchPendingTask = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/assigned_employee');
+        const data = await response.json();
+        if (response.ok) {
+          setPendingTasks(data.appointments);
+        } else {
+          console.error('Error fetching employees:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    }
+
+    // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchPendingTask();
+      return () => {
+      };
+    }, []); 
   
     useEffect(() => {
       const dates = [...new Set(completedTasks.map(task => task.date))];
@@ -573,12 +591,12 @@ const Employee = () => {
         <div className="mb-8">
           <h3 className="text-xl font-semibold mb-4">Pending Tasks</h3>
           {pendingTasks.map(task => (
-            <div key={task.id} className="bg-white shadow-md rounded-md p-6 mb-4">
+            <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
               <p className="text-lg font-semibold">{task.name}</p>
               <p className="text-gray-600">{task.service}</p>
-              <p>{task.date}, {task.time}</p>
+              <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
               <button
-                onClick={() => markAsCompleted(task.id)}
+                onClick={() => markAsCompleted(task.appointment_id)}
                 className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
               >
                 Mark as Completed

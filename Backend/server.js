@@ -617,6 +617,34 @@ app.put('/employee/update-password', async (req, res) => {
   }
 });
 
+// Employee Signup Endpoint
+app.post('/employee/signup', async (req, res) => {
+  const { username, password, firstName, lastName, phone, email } = req.body;
+
+  //console.log('Received signup request:', req.body);
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const sql = 'INSERT INTO employee (username, password, Fname, Lname, contact, email) VALUES (?, ?, ?, ?, ?, ?)';
+    
+    connection.query(sql, [username, hashedPassword, firstName, lastName, phone, email], (err, results) => {
+      if (err) {
+        console.error('Error executing SQL query:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error', error: err.message });
+      }
+
+      console.log('Signup successful. Affected rows:', results.affectedRows);
+
+      // Return a success response
+      return res.json({ success: true, message: 'Signup successful' });
+    });
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    return res.status(500).json({ success: false, message: 'Error hashing password' });
+  }
+});
+
 // Employee Logout Endpoint
 app.post('/employee/logout', (req, res) => {
   // Check if admin session exists
@@ -967,6 +995,7 @@ app.get('/assigned_employee', (req, res) => {
       services.service_name AS service,
       appointments.date_appointed,
       appointments.request_status,
+      assigned_employee.employee_id,
       CONCAT(
         UPPER(SUBSTRING(employee.Fname, 1, 1)),
         LOWER(SUBSTRING(employee.Fname, 2)),

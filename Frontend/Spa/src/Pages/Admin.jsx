@@ -940,7 +940,7 @@ const Admin = () => {
       }
     };
 
-     // useEffect hook to fetch data when the component mounts
+    // useEffect hook to fetch data when the component mounts
     useEffect(() => {
       fetchAssignedEmployee();
       return () => {
