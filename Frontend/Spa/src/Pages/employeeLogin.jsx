@@ -140,9 +140,9 @@ const Login = () => {
     <main>
       <section className="flex justify-center items-center min-h-screen bg-center bg-cover" style={{ backgroundImage: `url(${bg})` }}>
           <div className="w-full max-w-lg ">
-            <a href="/" className="mb-8 flex justify-center m-[5rem]">
+            <div className="mb-8 flex justify-center m-[5rem]">
               <img className=' rounded-xl' src={Logo} alt="Logo" width={250} />
-            </a>
+            </div>
             <div className="flex mb-4">
               <button
                 className={`w-1/2 py-2 px-4 ${activeTab === 'login' ? 'bg-dark text-white' : 'bg-light text-gray-700'}`}
