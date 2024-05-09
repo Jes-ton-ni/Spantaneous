@@ -575,7 +575,9 @@ const Employee = () => {
     const [completedDates, setCompletedDates] = useState([]);
     const [completedTimes, setCompletedTimes] = useState([]);
     const [showModal, setShowModal] = useState(false);
-    const [selectedTaskId, setSelectedTaskId] = useState(null);
+    const [selectedTaskId, setSelectedTaskId] = useState({
+      appointment_id: ''
+    });
     const [paymentMethod, setPaymentMethod] = useState('');
 
     const fetchAssignedTask = async () => {
@@ -648,30 +650,57 @@ const Employee = () => {
         console.error('Error declining appointment:', error);
       }      
     };
-  
-    const toggleModal = (taskId) => {
-      setShowModal(!showModal);
-      setSelectedTaskId(taskId);
-      const task = completedTasks.find(task => task.id === taskId);
-      if (task) {
-        setPaymentMethod(task.paymentMethod || '');
-      }
+
+    const openPaymentModal = (taskID) => {      
+      setSelectedTaskId(taskID);
+      setShowModal(true);
+    };
+
+    const closePaymentModal = () => {
+      setShowModal(false);
+      setSelectedTaskId({
+        appointment_id: ''
+      });
     };
   
     const handlePaymentMethodChange = (e) => {
       setPaymentMethod(e.target.value);
     };
   
-    const markAsPaid = () => {
-      const updatedCompletedTasks = completedTasks.map(task => {
-        if (task.id === selectedTaskId) {
-          return { ...task, paid: true, paymentMethod: paymentMethod };
+    const markAsPaid = async (appointmentId) => {
+      try {
+        // Make a PUT request to update the payment status of the customer
+        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/payment-status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ payment_status: 1 }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update payment status');
         }
-        return task;
-      });
-      setCompletedTasks(updatedCompletedTasks);
-      setShowModal(false);
+    
+        // Fetch the updated completed tasks
+        const updatedResponse = await fetch('http://localhost:5000/assigned_employee');
+        const updatedData = await updatedResponse.json();
+    
+        if (updatedResponse.ok) {
+          // Filter the completed tasks from the updated data
+          const updatedCompletedTasks = updatedData.appointments.filter(task => task.appointment_status === 1);
+          setCompletedTasks(updatedCompletedTasks);
+        } else {
+          console.error('Error fetching updated completed tasks:', updatedData.message);
+        }
+    
+        setShowModal(false);
+    
+      } catch (error) {
+        console.error('Error toggling paid status:', error);
+      }
     };
+    
   
     return (
       <div className="container mx-auto p-8">
@@ -727,20 +756,23 @@ const Employee = () => {
               <p className="text-lg font-semibold">{task.name}</p>
               <p className="text-gray-600">{task.service}</p>
               <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
-              {task.paid ? (
+              {task.payment_status ? (
                 <div>
-                  <p>Paid via {task.paymentMethod}</p>
+                  <p>Paid</p>
                 </div>
               ) : (
-                <button onClick={() => toggleModal(task.id)} className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300">
-                  Paid
+                <button 
+                  onClick={() => openPaymentModal(task.appointment_id)}
+                  className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
+                >
+                  Mark as Paid
                 </button>
               )}
             </div>
           ))}
         </div>
   
-        {showModal && selectedTaskId && (
+        {showModal && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
               <div className="fixed inset-0 transition-opacity" aria-hidden="true">
@@ -760,7 +792,7 @@ const Employee = () => {
                           onChange={handlePaymentMethodChange}
                           className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         >
-                          <option value="">Select Payment Method</option>
+                          <option value="" disabled>Select Payment Method</option>
                           <option value="GCash">GCash</option>
                           <option value="PayMaya">PayMaya</option>
                           <option value="Credit Card">Credit Card</option>
@@ -770,10 +802,13 @@ const Employee = () => {
                   </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                  <button onClick={() => setShowModal(false)} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                  <button onClick={() => closePaymentModal()} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-200 text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
                     Close
                   </button>
-                  <button onClick={markAsPaid} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                  <button 
+                    onClick={() => markAsPaid(selectedTaskId)}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-500 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
                     Mark as Paid
                   </button>
                 </div>

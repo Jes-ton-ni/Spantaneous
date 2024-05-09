@@ -996,6 +996,7 @@ app.get('/assigned_employee', (req, res) => {
       appointments.date_appointed,
       appointments.request_status,
       appointments.appointment_status,
+      appointments.payment_status,
       assigned_employee.employee_id,
       CONCAT(
         UPPER(SUBSTRING(employee.Fname, 1, 1)),
@@ -1128,7 +1129,7 @@ app.put('/appointments/:appointmentId/payment-status', (req, res) => {
   const { payment_status } = req.body;
 
   // Validate input
-  if (typeof payment_status !== 'boolean') {
+  if (typeof payment_status !== 'number') {
     return res.status(400).json({ success: false, message: 'Invalid payment status' });
   }
 

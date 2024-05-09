@@ -825,7 +825,6 @@ const Admin = () => {
             ))}
           </div>
         </div>
-
   
         {/* Update Service Modal */}
         {selectedService && (
@@ -1000,7 +999,7 @@ const Admin = () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ request_status: 1 }), // Assuming "request_status" is the field name
+            body: JSON.stringify({ request_status: 1 }),
           });
   
           if (!response.ok) {
@@ -1220,7 +1219,7 @@ const Admin = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ payment_status: !customers.find(customer => customer.appointment_id === appointmentId).payment_status }),
+          body: JSON.stringify({ payment_status: 1 }),
         });
         
         if (!response.ok) {

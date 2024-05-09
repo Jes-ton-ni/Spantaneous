@@ -232,6 +232,29 @@ const Profile = () => {
     setSelectedAppointment(appointments[index]);
   };
 
+  const confirmPayment = async (appointmentId) => {
+    try {
+      // Make a PUT request to update the payment status of the customer
+      const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/payment-status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ payment_status: 1 }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update payment status');
+      }
+
+      fetchAppointments();
+      setShowPaymentModal(!showPaymentModal);
+
+    } catch (error) {
+      console.error('Error toggling paid status:', error);
+    }
+  };
+
   useEffect(() => {
     const appointment = bookings.filter(booking => booking.customer_id === userData.user_id );
     setUserAppointments(appointment);
@@ -535,11 +558,11 @@ const Profile = () => {
                         required
                       />
                     </div>
-                    {/* Additional form fields for payment details */}
                   </form>
 
                   <button
-                      type="submit"
+                      type="button"
+                      onClick={() => confirmPayment(selectedAppointment.appointment_id)}
                       className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
                     >
                       Confirm Payment
