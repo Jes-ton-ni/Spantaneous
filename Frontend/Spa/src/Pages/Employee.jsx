@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { FaUserAlt, FaCalendarAlt, FaTasks } from 'react-icons/fa';
 import Logo from '../assets/img/Logo.png';
 
@@ -6,52 +6,196 @@ const Employee = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const Profile = () => {
-    // Sample employee information
-    const [formData, setFormData] = useState({
-      firstName: "thennek",
-      lastName: "alepse",
-      username: "alepse12",
-      email: "alepse@gmail.com",
-      contact: "123-456-7890",
-      currentPassword: "",
-      newPassword: "",
-      confirmNewPassword: ""
-    });
-  
+    
+    const [isLoggedIn, setIsLoggedIn] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [alertMessage, setAlertMessage] = useState("");
+    const [employeeData, setEmployeeData] = useState([]);
+    const [employeeUpdate, setEmployeeUpdate] = useState(null);
+    const [changePassword, setChangePassword] = useState({
+      employee_id: null,
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: ''
+    });
+
+    // Function to check login status and employee data
+    const checkLoginStatus = useCallback(async () => {
+      try {
+        const response = await fetch('http://localhost:5000/employee/check-login', {
+          method: 'GET',
+          credentials: 'include' // Include cookies in the request
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Set isLoggedIn state
+          setIsLoggedIn(data.isLoggedIn);
+        } else {
+          // If response is not ok, set isLoggedIn to false
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        // Handle error, e.g., show an error message to the user
+      }
+    }, []); 
+
+    useEffect(() => {
+      // Call the function to check login status when the component mounts
+      checkLoginStatus();
+    }, [checkLoginStatus]);
+
+    useEffect(() => {
+      if (isLoggedIn === false) {
+        window.location.href = '/employeelogin';
+      }
+    }, [isLoggedIn]);
+
+    // Function to fetch employee data
+    const fetchEmployeeData = useCallback(async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get-employeeData', {
+          method: 'GET',
+          credentials: 'include' // Include cookies in the request
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Set isLoggedIn state
+          setEmployeeData(data.employeeData);
+        } else {
+          console.error('Failed to fetch user data:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        // Handle error
+      }
+    }, []); 
+
+    useEffect(() => {
+      fetchEmployeeData();
+    }, [fetchEmployeeData])
+
   
-    const toggleModal = () => setShowModal(!showModal);
-    const togglePasswordModal = () => setShowPasswordModal(!showPasswordModal);
+    const openModal = (employeeData) => {
+      setEmployeeUpdate(employeeData);
+      setShowModal(true);
+    };
   
+    const closeModal = () => {
+      setEmployeeUpdate(null);
+      setShowModal(false);
+    };
+
     const handleChange = (e) => {
-      setFormData({
-        ...formData,
-        [e.target.name]: e.target.value
+      const { name, value } = e.target;
+      setEmployeeUpdate(prevFields => ({
+        ...prevFields,
+        [name]: value
+      }));
+    };
+    
+    const updateProfile = async (e) => {
+      e.preventDefault();
+      try {
+
+        // Send the user data to the backend
+        const response = await fetch('http://localhost:5000/update-employee', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(employeeUpdate),
+        });
+    
+        // Check if the request was successful
+        if (response.ok) {
+          // If successful, close the modal and show success message
+          closeModal();
+          setAlertMessage("You have successfully updated your profile!");
+          setTimeout(() => {
+            setAlertMessage("");
+          }, 3000);
+          fetchEmployeeData();
+        } else {
+          // If there was an error, log it
+          console.error('Failed to update profile:', response.statusText);
+          // Optionally, show an error message to the user
+          setAlertMessage("Failed to update profile. Please try again later.");
+        }
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        // Optionally, show an error message to the user
+        setAlertMessage("Failed to update profile. Please try again later.");
+      }
+    };
+
+    const openPassModal = () => {
+      // Check if userData is not empty and set the user_id in changePassword state
+    if (employeeData && employeeData.employee_id) {
+      setChangePassword(prevState => ({
+        ...prevState,
+        employee_id: employeeData.employee_id
+      }));
+    }
+      setShowPasswordModal(true);
+    };
+  
+    const closePassModal = () => {
+      setShowPasswordModal(false);
+      setChangePassword({
+        user_id: null,
+        currentPassword: '',
+        newPassword: '',
+        confirmNewPassword: ''
       });
     };
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      // Logic to update profile information
-      console.log("Profile updated:", formData);
-      setAlertMessage("Profile updated successfully!");
-      toggleModal();
-      setTimeout(() => {
-        setAlertMessage("");
-      }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
+
+    const handleChangePassword = (e) => {
+      const { name, value } = e.target;
+      setChangePassword(prevFields => ({
+        ...prevFields,
+        [name]: value
+      }));
     };
   
-    const handlePasswordChange = (e) => {
+    const handleUpdatePassword = async (e) => {
       e.preventDefault();
-      // Logic to change password
-      console.log("Password changed:", formData.newPassword);
-      setAlertMessage("Password changed successfully!");
-      togglePasswordModal();
-      setTimeout(() => {
-        setAlertMessage("");
-      }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
+      try {
+  
+        // Send the data to the backend
+        const response = await fetch('http://localhost:5000/employee/update-password', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(changePassword),
+        });
+  
+        if (response.ok) {
+          closePassModal();
+          setAlertMessage("Password changed successfully!");
+          setTimeout(() => {
+            setAlertMessage("");
+          }, 3000);
+        } else {
+          closePassModal();
+          console.error('Failed to change password:', response.statusText);
+          // Optionally, show an error message to the user
+          setAlertMessage("Failed to change password. Please try again later.");
+          setTimeout(() => {
+            setAlertMessage("");
+          }, 3000);
+        }
+      } catch (error) {
+        closePassModal();
+        console.error('Error changing password:', error);
+        // Optionally, show an error message to the user
+        setAlertMessage("Failed to change password. Please try again later.");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
+      }
     };
   
     return (
@@ -62,19 +206,19 @@ const Employee = () => {
             {alertMessage}
           </div>
         )}
-        <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {formData.firstName}!</h2>
+        <h2 className="text-lg lg:text-4xl font-semibold mb-4">Welcome, {employeeData.Fname}!</h2>
         <div className="mb-4 space-y-2">
           <h2 className="text-2xl font-palanquin font-bold">Profile Information:</h2>
-          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {formData.firstName}</p>
-          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {formData.lastName}</p>
-          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {formData.username}</p>
-          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {formData.email}</p>
-          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {formData.contact}</p>
-          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={toggleModal}>Update Profile</button>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">First Name:</span> {employeeData.Fname}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Last Name:</span> {employeeData.Lname}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Username:</span> {employeeData.username}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Email:</span> {employeeData.email}</p>
+          <p className="text-gray-700 text-sm lg:text-base"><span className="font-semibold">Contact:</span> {employeeData.contact}</p>
+          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={() => openModal(employeeData)}>Update Profile</button>
         </div>
         <div className="mb-4 space-y-2">
           <h2 className="text-2xl font-palanquin font-bold">Password and Security:</h2>
-          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={togglePasswordModal}>Change Password</button>
+          <button className="bg-dark hover:bg-light-dark text-white px-4 py-2 rounded-md mb-2 lg:mb-0 mr-0 lg:mr-2" onClick={openPassModal}>Change Password</button>
         </div>
   
         {showModal && (
@@ -84,11 +228,11 @@ const Employee = () => {
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
                   <p className="text-2xl font-semibold">Update Profile</p>
-                  <button className="modal-close" onClick={toggleModal}>
+                  <button className="modal-close" onClick={closeModal}>
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={updateProfile}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName">
                       First Name
@@ -97,9 +241,9 @@ const Employee = () => {
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="firstName"
                       type="text"
-                      name="firstName"
+                      name="Fname"
                       placeholder="First Name"
-                      value={formData.firstName}
+                      value={employeeUpdate.Fname}
                       onChange={handleChange}
                     />
                   </div>
@@ -111,9 +255,9 @@ const Employee = () => {
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="lastName"
                       type="text"
-                      name="lastName"
+                      name="Lname"
                       placeholder="Last Name"
-                      value={formData.lastName}
+                      value={employeeUpdate.Lname}
                       onChange={handleChange}
                     />
                   </div>
@@ -127,7 +271,7 @@ const Employee = () => {
                       type="text"
                       name="username"
                       placeholder="Username"
-                      value={formData.username}
+                      value={employeeUpdate.username}
                       onChange={handleChange}
                     />
                   </div>
@@ -141,7 +285,7 @@ const Employee = () => {
                       type="email"
                       name="email"
                       placeholder="Email"
-                      value={formData.email}
+                      value={employeeUpdate.email}
                       onChange={handleChange}
                     />
                   </div>
@@ -155,7 +299,7 @@ const Employee = () => {
                       type="text"
                       name="contact"
                       placeholder="Contact"
-                      value={formData.contact}
+                      value={employeeUpdate.contact}
                       onChange={handleChange}
                     />
                   </div>
@@ -163,7 +307,7 @@ const Employee = () => {
                     <button
                       type="button"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                      onClick={toggleModal}
+                      onClick={closeModal}
                     >
                       Cancel
                     </button>
@@ -187,11 +331,11 @@ const Employee = () => {
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
                   <p className="text-2xl font-semibold">Change Password</p>
-                  <button className="modal-close" onClick={togglePasswordModal}>
+                  <button className="modal-close" onClick={closePassModal}>
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
-                <form onSubmit={handlePasswordChange}>
+                <form onSubmit={handleUpdatePassword}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currentPassword">
                       Current Password
@@ -202,16 +346,43 @@ const Employee = () => {
                       type="password"
                       name="currentPassword"
                       placeholder="Current Password"
-                      value={formData.currentPassword}
-                      onChange={handleChange}
+                      value={changePassword.currentPassword}
+                      onChange={handleChangePassword}
                     />
                   </div>
-                  {/* Add other fields here */}
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newPassword">
+                      New Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="newPassword"
+                      type="password"
+                      name="newPassword"
+                      placeholder="New Password"
+                      value={changePassword.newPassword}
+                      onChange={handleChangePassword}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmNewPassword">
+                      Confirm New Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="confirmNewPassword"
+                      type="password"
+                      name="confirmNewPassword"
+                      placeholder="Confirm New Password"
+                      value={changePassword.confirmNewPassword}
+                      onChange={handleChangePassword}
+                    />
+                  </div>
                   <div className="flex items-center justify-end">
                     <button
                       type="button"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                      onClick={togglePasswordModal}
+                      onClick={closePassModal}
                     >
                       Cancel
                     </button>
@@ -524,8 +695,26 @@ const Employee = () => {
     setActiveTab(tab);
   };
 
-  const handleLogout = () => {
-    console.log('Logout clicked');
+  const handleLogout = async (e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    try {
+      const response = await fetch('http://localhost:5000/employee/logout', {
+        method: 'POST',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        // Logout successful
+        console.log('Logout successful');
+        // Redirect to the login page
+        window.location.href = '/EmployeeLogin';
+      } else {
+        // Logout failed
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      // Handle error, display error message or any appropriate action
+    }
   };
 
   return (
@@ -584,7 +773,9 @@ const Employee = () => {
       <main className="flex-1 bg-gray-200 min-h-screen ">
         <header className="bg-light flex justify-end items-center px-4 py-2 border-b border-dark">
           <h1 className="text-xl font-bold text-dark m-4">Employee Dashboard</h1>
-          <button className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300" onClick={handleLogout}>
+          <button 
+          className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300" 
+          onClick={handleLogout}>
             Logout
           </button>
         </header>

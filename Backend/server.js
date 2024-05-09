@@ -281,7 +281,7 @@ app.post('/logout', (req, res) => {
   } 
 
   // Check if both admin and user sessions are zero
-  if (!req.session.admin && !req.session.user) {
+  if (!req.session.admin && !req.session.user && !req.session.employee) {
     // Destroy the session in the database using the session ID
     sessionStore.destroy(req.sessionID, (err) => {
       if (err) {
@@ -427,7 +427,206 @@ app.post('/admin/logout', (req, res) => {
   } 
   
   // Check if both admin and user sessions are zero
-  if (!req.session.admin && !req.session.user) {
+  if (!req.session.admin && !req.session.user && !req.session.employee) {
+    // Destroy the session in the database using the session ID
+    sessionStore.destroy(req.sessionID, (err) => {
+      if (err) {
+        console.error('Error destroying session in database:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+      
+      res.clearCookie('connect.sid');
+
+      // Destroy the session on the server
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Error destroying session:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+        // Session destroyed successfully
+        return res.json({ success: true, message: 'Admin logout successful, session destroyed' });
+      });
+    });
+  } else {
+    // If either admin or user session exists, respond with success message
+    return res.json({ success: true, message: 'Logout successful' });
+  }
+});
+
+// Employee Login Endpoint
+app.post('/employee/login', (req, res) => {
+  const { identifier, password } = req.body; // Use 'identifier' to accept either username or email
+  const sql = 'SELECT * FROM employee WHERE (username = ? OR email = ?)'; // Update SQL query to retrieve admin by username or email
+  connection.query(sql, [identifier, identifier], async (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    if (results.length > 0) {
+      const employee = results[0];
+      try {
+        // Compare the provided password with the hashed password from the database
+        const passwordMatch = await bcrypt.compare(password, employee.password);
+        if (passwordMatch) {
+          // Set admin data in the session upon successful login
+          req.session.employee = {
+            employee_id: employee.employee_id
+          };
+          console.log('Employee logged in:', req.session.employee);
+          return res.json({ success: true, message: 'Employee login successful' });
+        } else {
+          return res.status(401).json({ success: false, message: 'Invalid password' });
+        }
+      } catch (error) {
+        console.error('Error comparing passwords:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    } else {
+      return res.status(401).json({ success: false, message: 'Admin not found' });
+    }
+  });
+});
+
+// Endpoint for checking login status
+app.get('/employee/check-login', (req, res) => {
+  // Retrieve session data from the database
+  sessionStore.get(req.sessionID, (err, session) => {
+    if (err) {
+      console.error('Error fetching session from database:', err);
+      return res.status(500).json({ isLoggedIn: false, error: 'Internal server error' });
+    }
+
+    // Check if session exists and has user data
+    if (session && session.employee) {
+      // User is logged in
+      return res.status(200).json({ isLoggedIn: true, employee: session.employee });
+    } else {
+      // Session not found or user not logged in
+      return res.status(200).json({ isLoggedIn: false });
+    }
+  });
+});
+
+// Endpoint to get userData from users table based on user_id
+app.get('/get-employeeData', (req, res) => {
+  // Check if employee is logged in and session contains employee_id
+  if (req.session.employee && req.session.employee.employee_id) {
+    const employeeId = req.session.employee.employee_id;
+    const sql = 'SELECT employee_id, Fname, Lname, username, contact, email FROM employee WHERE employee_id = ?';
+
+    connection.query(sql, [employeeId], (err, results) => {
+      if (err) {
+        console.error('Error fetching user data:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+      if (results.length > 0) {
+        const employeeData = results[0];
+        return res.json({ success: true, employeeData });
+      } else {
+        return res.status(404).json({ success: false, message: 'Employee data not found' });
+      }
+    });
+  } else {
+    // If user is not authenticated or session user_id is not set
+    return res.status(401).json({ success: false, message: 'Employee not authenticated' });
+  }
+});
+
+// Endpoint for updating user profile
+app.put('/update-employee', async (req, res) => {
+  try {
+    // Retrieve updated user profile data from the request body
+    const { employee_id, Fname, Lname, username, email, contact } = req.body;
+
+    //console.log('Received Updated Profile request:', req.body);
+
+    // Update the user profile in the database
+    const sql = 'UPDATE employee SET Fname = ?, Lname = ?, username = ?, email = ?, contact = ? WHERE employee_id = ?';
+    connection.query(sql, [Fname, Lname, username, email, contact, employee_id], (err, results) => {
+      if (err) {
+        console.error('Error updating employee profile:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+
+      // Check if the user profile was successfully updated
+      if (results.affectedRows > 0) {
+        return res.json({ success: true, message: 'Employee Profile updated successfully' });
+      } else {
+        return res.status(404).json({ success: false, message: 'employee not found' });
+      }
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Endpoint for updating user password
+app.put('/employee/update-password', async (req, res) => {
+  try {
+    // Retrieve updated user password data from the request body
+    const { employee_id, currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    console.log('Received Updated Password request:', req.body);
+
+    // Check if newPassword and confirmPassword are equal
+    if (!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New password and confirm password do not match or are empty" });
+    }
+
+    // Fetch the hashed password of the user from the database
+    const sql = 'SELECT password FROM employee WHERE employee_id = ?';
+    connection.query(sql, [employee_id], async (err, results) => {
+      if (err) {
+        console.error('Error fetching user password:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      const user = results[0];
+      const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update the user password in the database
+      const updateSql = 'UPDATE employee SET password = ? WHERE employee_id = ?';
+      connection.query(updateSql, [hashedPassword, employee_id], (err, updateResults) => {
+        if (err) {
+          console.error('Error updating password:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+
+        if (updateResults.affectedRows > 0) {
+          return res.json({ success: true, message: 'Password Changed Successfully' });
+        } else {
+          return res.status(500).json({ success: false, message: 'Failed to update password' });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// Employee Logout Endpoint
+app.post('/employee/logout', (req, res) => {
+  // Check if admin session exists
+  if (req.session.employee) {
+    // Remove admin data from the session
+    delete req.session.employee;
+  } 
+  
+  // Check if both admin and user sessions are zero
+  if (!req.session.admin && !req.session.user && !req.session.employee) {
     // Destroy the session in the database using the session ID
     sessionStore.destroy(req.sessionID, (err) => {
       if (err) {

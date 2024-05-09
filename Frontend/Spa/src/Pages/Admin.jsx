@@ -16,7 +16,7 @@ const Admin = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
 
-  // Function to check login status and user data
+  // Function to check login status and admin data
   const checkLoginStatus = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/admin/check-login', {
@@ -50,19 +50,7 @@ const Admin = () => {
     }
   }, [isLoggedIn]);
    
-  const [formData, setFormData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmNewPassword: ""
-  });
-  
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-  
+
   const openPassModal = () => {
     if(adminData && adminData.admin_id){
       setChangePassword(prevState => ({
