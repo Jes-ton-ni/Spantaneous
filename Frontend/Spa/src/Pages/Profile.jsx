@@ -168,6 +168,12 @@ const Profile = () => {
 
   const closePassModal = () => {
     setShowPasswordModal(false);
+    setChangePassword({
+      user_id: null,
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: ''
+    });
   };
 
   const handleChangePassword = (e) => {
@@ -198,14 +204,22 @@ const Profile = () => {
           setAlertMessage("");
         }, 3000);
       } else {
+        closePassModal();
         console.error('Failed to change password:', response.statusText);
         // Optionally, show an error message to the user
         setAlertMessage("Failed to change password. Please try again later.");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
       }
     } catch (error) {
+      closePassModal();
       console.error('Error changing password:', error);
       // Optionally, show an error message to the user
       setAlertMessage("Failed to change password. Please try again later.");
+      setTimeout(() => {
+        setAlertMessage("");
+      }, 3000);
     }
   };
 
@@ -536,7 +550,6 @@ const Profile = () => {
           </div>
         </div>
         )}
-
 
         {/* View Appointments Section */}
         <div className={`w-full  ${appointments.length > 2 ? 'overflow-y-auto h-[32rem]' : ''}`}>

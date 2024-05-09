@@ -354,12 +354,68 @@ app.get('/admin/check-login', (req, res) => {
     // Check if session exists and has user data
     if (session && session.admin) {
       // User is logged in
-      return res.status(200).json({ isLoggedIn: true, user: session.admin });
+      return res.status(200).json({ isLoggedIn: true, admin: session.admin });
     } else {
       // Session not found or user not logged in
       return res.status(200).json({ isLoggedIn: false });
     }
   });
+});
+
+// Endpoint for updating user password
+app.put('/admin/update-password', async (req, res) => {
+  try {
+    // Retrieve updated user password data from the request body
+    const { admin_id, currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    console.log('Received Updated Password request:', req.body);
+
+    // Check if newPassword and confirmPassword are equal
+    if (!newPassword || !confirmNewPassword || newPassword !== confirmNewPassword) {
+      return res.status(400).json({ error: "New password and confirm password do not match or are empty" });
+    }
+
+    // Fetch the hashed password of the user from the database
+    const sql = 'SELECT password FROM admin WHERE admin_id = ?';
+    connection.query(sql, [admin_id], async (err, results) => {
+      if (err) {
+        console.error('Error fetching user password:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      const user = results[0];
+      const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update the user password in the database
+      const updateSql = 'UPDATE admin SET password = ? WHERE admin_id = ?';
+      connection.query(updateSql, [hashedPassword, admin_id], (err, updateResults) => {
+        if (err) {
+          console.error('Error updating password:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+
+        if (updateResults.affectedRows > 0) {
+          return res.json({ success: true, message: 'Password Changed Successfully' });
+        } else {
+          return res.status(500).json({ success: false, message: 'Failed to update password' });
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // Admin Logout Endpoint
@@ -368,7 +424,6 @@ app.post('/admin/logout', (req, res) => {
   if (req.session.admin) {
     // Remove admin data from the session
     delete req.session.admin;
-    
   } 
   
   // Check if both admin and user sessions are zero

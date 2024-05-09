@@ -6,10 +6,15 @@ const Admin = () => {
   // State to track active tab
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoggedIn, setIsLoggedIn] = useState(null);
-
+  const [adminData, setAdminData] = useState([]);
+  const [changePassword, setChangePassword] = useState({
+    admin_id: null,
+    currentPassword: '',
+    newPassword: '',
+    confirmNewPassword: ''
+  });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
-  const togglePasswordModal = () => setShowPasswordModal(!showPasswordModal);
 
   // Function to check login status and user data
   const checkLoginStatus = useCallback(async () => {
@@ -22,6 +27,7 @@ const Admin = () => {
         const data = await response.json();
         // Set isLoggedIn state
         setIsLoggedIn(data.isLoggedIn);
+        setAdminData(data.admin);
       } else {
         // If response is not ok, set isLoggedIn to false
         setIsLoggedIn(false);
@@ -56,16 +62,72 @@ const Admin = () => {
       [e.target.name]: e.target.value
     });
   };
+  
+  const openPassModal = () => {
+    if(adminData && adminData.admin_id){
+      setChangePassword(prevState => ({
+        ...prevState,
+        admin_id: adminData.admin_id
+      }));
+    }
+    setShowPasswordModal(true);
+  }
 
-  const handlePasswordChange = (e) => {
+  const closePassModal = () => {
+    setShowPasswordModal(false);
+    setChangePassword({
+      admin_id: null,
+      currentPassword: '',
+      newPassword: '',
+      confirmNewPassword: ''
+    });
+  }
+
+  const handleChangePassword = (e) => {
+    const { name, value } = e.target;
+    setChangePassword(prevFields => ({
+      ...prevFields,
+      [name]: value
+    }));
+  };
+
+  const handleUpdatePassword = async (e) => {
     e.preventDefault();
-    // Logic to change password
-    console.log("Password changed:", formData.newPassword);
-    setAlertMessage("Password changed successfully!");
-    togglePasswordModal();
-    setTimeout(() => {
-      setAlertMessage("");
-    }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
+    try {
+
+      // Send the data to the backend
+      const response = await fetch('http://localhost:5000/admin/update-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(changePassword),
+      });
+
+      if (response.ok) {
+        closePassModal();
+        setAlertMessage("Password changed successfully!");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
+      } else {
+        closePassModal();
+        console.error('Failed to change password:', response.statusText);
+        // Optionally, show an error message to the user
+        setAlertMessage("Failed to change password. Please try again later.");
+        setTimeout(() => {
+          setAlertMessage("");
+        }, 3000);
+      }
+    } catch (error) {
+      closePassModal();
+      console.error('Error changing password:', error);
+      // Optionally, show an error message to the user
+      setAlertMessage("Failed to change password. Please try again later.");
+      setTimeout(() => {
+        setAlertMessage("");
+      }, 3000);
+    }
   };
 
   
@@ -1363,7 +1425,7 @@ const Admin = () => {
         return null;
     }
   };
-  
+
   return (
     <div className="flex flex-col lg:flex-row">
       {/* Sidebar */}
@@ -1484,7 +1546,7 @@ const Admin = () => {
         {/* Content Header */}
         <header className="bg-light flex justify-end items-center px-4 py-2 border-b border-dark">
           <h1 className="text-xl font-bold text-dark m-4">Admin Dashboard</h1>
-          <button  className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300 mr-2" onClick={togglePasswordModal}>
+          <button  className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300 mr-2" onClick={openPassModal}>
             Change  password
           </button>
           <button  className="text-white px-4 py-2 bg-dark rounded-full hover:bg-light-dark transition-colors duration-300" onClick={Logout}>
@@ -1505,11 +1567,11 @@ const Admin = () => {
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
                   <p className="text-2xl font-semibold">Change Password</p>
-                  <button className="modal-close" onClick={togglePasswordModal}>
+                  <button className="modal-close" onClick={closePassModal}>
                     <span className="text-3xl">&times;</span>
                   </button>
                 </div>
-                <form onSubmit={handlePasswordChange}>
+                <form onSubmit={handleUpdatePassword}>
                   <div className="mb-4">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="currentPassword">
                       Current Password
@@ -1520,8 +1582,36 @@ const Admin = () => {
                       type="password"
                       name="currentPassword"
                       placeholder="Current Password"
-                      value={formData.currentPassword}
-                      onChange={handleChange}
+                      value={changePassword.currentPassword}
+                      onChange={handleChangePassword}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="newPassword">
+                      New Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="newPassword"
+                      type="password"
+                      name="newPassword"
+                      placeholder="New Password"
+                      value={changePassword.newPassword}
+                      onChange={handleChangePassword}
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="confirmNewPassword">
+                      Confirm New Password
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="confirmNewPassword"
+                      type="password"
+                      name="confirmNewPassword"
+                      placeholder="Confirm New Password"
+                      value={changePassword.confirmNewPassword}
+                      onChange={handleChangePassword}
                     />
                   </div>
                   {/* Add other fields here */}
@@ -1529,7 +1619,7 @@ const Admin = () => {
                     <button
                       type="button"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2"
-                      onClick={togglePasswordModal}
+                      onClick={closePassModal}
                     >
                       Cancel
                     </button>

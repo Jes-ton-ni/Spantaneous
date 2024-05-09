@@ -18,7 +18,7 @@ const Login = () => {
   // Function to check login status and user data
   const checkLoginStatus = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:5000/check-login', {
+      const response = await fetch('http://localhost:5000/admin/check-login', {
         method: 'GET',
         credentials: 'include' // Include cookies in the request
       });
@@ -130,6 +130,12 @@ const Login = () => {
       alert('An error occurred while signing up. Please try again later.'); // Display a generic error message to the user
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn === true) {
+      window.location.href = '/admin';
+    }
+  }, [isLoggedIn]);
   
   return (
     <main>

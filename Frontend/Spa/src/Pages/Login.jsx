@@ -4,6 +4,17 @@ import bg from '../assets/img/mt.jpg';
 import swal from 'sweetalert';
 
 const Login = () => {
+  const [activeTab, setActiveTab] = useState('login');
+  const [identifier, setIdentifier] = useState(''); // Update state to hold identifier (username or email)
+  const [loginPassword, setLoginPassword] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupFirstName, setSignupFirstName] = useState('');
+  const [signupLastName, setSignupLastName] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Add state to track login status
+
   useEffect(() => {
     document.title = 'Login/Signup - Spa-ntaneous';
 
@@ -23,17 +34,6 @@ const Login = () => {
 
     checkLoginStatus(); // Call the function
   }, []);
-
-  const [activeTab, setActiveTab] = useState('login');
-  const [identifier, setIdentifier] = useState(''); // Update state to hold identifier (username or email)
-  const [loginPassword, setLoginPassword] = useState('');
-  const [signupUsername, setSignupUsername] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupFirstName, setSignupFirstName] = useState('');
-  const [signupLastName, setSignupLastName] = useState('');
-  const [signupPhone, setSignupPhone] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Add state to track login status
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault();
@@ -124,6 +124,12 @@ const Login = () => {
       alert('An error occurred while signing up. Please try again later.'); // Display a generic error message to the user
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn === true) {
+      window.location.href = '/';
+    }
+  }, [isLoggedIn]);
   
   return (
     <main>
