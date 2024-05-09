@@ -995,6 +995,7 @@ app.get('/assigned_employee', (req, res) => {
       services.service_name AS service,
       appointments.date_appointed,
       appointments.request_status,
+      appointments.appointment_status,
       assigned_employee.employee_id,
       CONCAT(
         UPPER(SUBSTRING(employee.Fname, 1, 1)),
@@ -1076,6 +1077,38 @@ app.put('/appointments/:appointmentId/request-status', (req, res) => {
 
   // Execute the SQL query
   connection.query(sql, [request_status, appointmentId], (err, results) => {
+    if (err) {
+      //console.error('Error updating request status:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Check if the appointment was found and updated
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    }
+    // Send success response
+    return res.json({ success: true, message: 'Request status updated successfully' });
+  });
+});
+
+// Endpoint to set appointment status of appointments to 1 for completed appointment
+app.put('/appointments/:appointmentId/appointment-status', (req, res) => {
+  const { appointmentId } = req.params;
+  const { appointment_status } = req.body;
+
+  // Validate input
+  if (typeof appointment_status !== 'number') {
+    return res.status(400).json({ success: false, message: 'Invalid request status' });
+  }
+
+  // SQL query to update request status
+  const sql = `
+    UPDATE appointments
+    SET appointment_status = ?
+    WHERE appointment_id = ?
+  `;
+
+  // Execute the SQL query
+  connection.query(sql, [appointment_status, appointmentId], (err, results) => {
     if (err) {
       //console.error('Error updating request status:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });

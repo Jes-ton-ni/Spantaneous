@@ -565,6 +565,7 @@ const Employee = () => {
   
   
   const Tasks = () => {
+    const [assignedTasks, setAssignedTasks] = useState([]);
     const [pendingTasks, setPendingTasks] = useState([]);
     const [completedTasks, setCompletedTasks] = useState([]);
     const [completedFilter, setCompletedFilter] = useState({
@@ -577,12 +578,12 @@ const Employee = () => {
     const [selectedTaskId, setSelectedTaskId] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('');
 
-    const fetchPendingTask = async () => {
+    const fetchAssignedTask = async () => {
       try {
         const response = await fetch('http://localhost:5000/assigned_employee');
         const data = await response.json();
         if (response.ok) {
-          setPendingTasks(data.appointments);
+          setAssignedTasks(data.appointments);
         } else {
           console.error('Error fetching employees:', data.message);
         }
@@ -593,14 +594,21 @@ const Employee = () => {
 
     // useEffect hook to fetch data when the component mounts
     useEffect(() => {
-      fetchPendingTask();
+      fetchAssignedTask();
       return () => {
       };
     }, []); 
+
+    useEffect(() => {
+      const pendingTasks = assignedTasks.filter(task => task.appointment_status === 0);
+      const completedTasks = assignedTasks.filter(task => task.appointment_status === 1);
+      setPendingTasks(pendingTasks);
+      setCompletedTasks(completedTasks);
+    }, [assignedTasks]);
   
     useEffect(() => {
-      const dates = [...new Set(completedTasks.map(task => task.date))];
-      const times = [...new Set(completedTasks.map(task => task.time))];
+      const dates = [...new Set(completedTasks.map(task => new Date(task.date_appointed).toLocaleDateString()))];
+      const times = [...new Set(completedTasks.map(task => new Date(task.date_appointed).toLocaleTimeString()))];
       setCompletedDates(dates);
       setCompletedTimes(times);
     }, [completedTasks]);
@@ -614,18 +622,31 @@ const Employee = () => {
     };
   
     const filteredCompletedTasks = completedTasks.filter(task => {
-      const isDateMatch = !completedFilter.date || task.date === completedFilter.date;
-      const isTimeMatch = !completedFilter.time || task.time === completedFilter.time;
+      const isDateMatch = !completedFilter.date || new Date(task.date_appointed).toLocaleDateString() === completedFilter.date;
+      const isTimeMatch = !completedFilter.time || new Date(task.date_appointed).toLocaleTimeString() === completedFilter.time;
       return isDateMatch && isTimeMatch;
     });
   
-    const markAsCompleted = (taskId) => {
-      const taskIndex = pendingTasks.findIndex(task => task.id === taskId);
-      if (taskIndex !== -1) {
-        const completedTask = { ...pendingTasks[taskIndex], paid: false, paymentMethod: '' };
-        setCompletedTasks(prevState => [...prevState, completedTask]);
-        setPendingTasks(prevState => prevState.filter(task => task.id !== taskId));
-      }
+    const markAsCompleted = async (appointmentId) => {
+      try {
+        // Make a PUT request to update the request status to 3 (declined)
+        const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/appointment-status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ appointment_status: 1 }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update request status');
+        }
+
+        // Remove the declined booking from the local state
+        setPendingTasks(pendingTasks.filter(appointment => appointment.appointment_id !== appointmentId));
+      } catch (error) {
+        console.error('Error declining appointment:', error);
+      }      
     };
   
     const toggleModal = (taskId) => {
@@ -702,10 +723,10 @@ const Employee = () => {
             </select>
           </div>
           {filteredCompletedTasks.map(task => (
-            <div key={task.id} className="bg-white shadow-md rounded-md p-6 mb-4">
+            <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
               <p className="text-lg font-semibold">{task.name}</p>
               <p className="text-gray-600">{task.service}</p>
-              <p>{task.date}, {task.time}</p>
+              <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
               {task.paid ? (
                 <div>
                   <p>Paid via {task.paymentMethod}</p>

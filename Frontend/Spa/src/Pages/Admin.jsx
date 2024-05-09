@@ -1046,9 +1046,7 @@ const Admin = () => {
 
     useEffect(() => {
       const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
-      //const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
       setPendingAppointment(pendingAppointment);
-     // setAppointmentAccepted(acceptedAppointment);
     }, [bookings]);
 
     function capitalizeEachWord(str) {
