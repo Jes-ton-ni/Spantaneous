@@ -484,7 +484,7 @@ const Profile = () => {
                   {/* Display selected appointment details */}
                   {selectedAppointment && (
                     <div>
-                    <p className="text-gray-700 mb-2">Service: {selectedAppointment.name}</p>
+                    <p className="text-gray-700 mb-2">Name: {selectedAppointment.name}</p>
                       <p className="text-gray-700 mb-2">Service: {selectedAppointment.service}</p>
                       <p className="text-gray-700 mb-2">Schedule: {new Date(selectedAppointment.date_appointed).toLocaleDateString()} {new Date(selectedAppointment.date_appointed).toLocaleTimeString()}</p>
                       <p className="text-gray-700 mb-2">Total: PHP{selectedAppointment.price_final}</p>

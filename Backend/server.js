@@ -308,6 +308,96 @@ app.post('/logout', (req, res) => {
   });
 });
 
+// Admin Login Endpoint
+app.post('/admin/login', (req, res) => {
+  const { identifier, password } = req.body; // Use 'identifier' to accept either username or email
+  const sql = 'SELECT * FROM admin WHERE (username = ? OR email = ?)'; // Update SQL query to retrieve admin by username or email
+  connection.query(sql, [identifier, identifier], async (err, results) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    if (results.length > 0) {
+      const admin = results[0];
+      try {
+        // Compare the provided password with the hashed password from the database
+        const passwordMatch = await bcrypt.compare(password, admin.password);
+        if (passwordMatch) {
+          // Set admin data in the session upon successful login
+          req.session.admin = {
+            admin_id: admin.admin_id
+          };
+          console.log('Admin logged in:', req.session.admin);
+          return res.json({ success: true, message: 'Admin login successful' });
+        } else {
+          return res.status(401).json({ success: false, message: 'Invalid password' });
+        }
+      } catch (error) {
+        console.error('Error comparing passwords:', error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+      }
+    } else {
+      return res.status(401).json({ success: false, message: 'Admin not found' });
+    }
+  });
+});
+
+// Endpoint for checking login status
+app.get('/admin/check-login', (req, res) => {
+  // Retrieve session data from the database
+  sessionStore.get(req.sessionID, (err, session) => {
+    if (err) {
+      console.error('Error fetching session from database:', err);
+      return res.status(500).json({ isLoggedIn: false, error: 'Internal server error' });
+    }
+
+    // Check if session exists and has user data
+    if (session && session.admin) {
+      // User is logged in
+      return res.status(200).json({ isLoggedIn: true, user: session.admin });
+    } else {
+      // Session not found or user not logged in
+      return res.status(200).json({ isLoggedIn: false });
+    }
+  });
+});
+
+// Endpoint for admin logout
+app.post('/admin/logout', (req, res) => {
+  // Check if session exists in the session store
+  sessionStore.get(req.sessionID, (err, session) => {
+    if (err) {
+      console.error('Error fetching session from database:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+
+    // Check if session exists and has admin data
+    if (session && session.admin) {
+      // Destroy the session in the database using the session ID
+      sessionStore.destroy(req.sessionID, (err) => {
+        if (err) {
+          console.error('Error destroying session in database:', err);
+          return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+        // Clear cookies by setting their expiration time to a past date
+        res.clearCookie('connect.sid');
+        // Destroy the session on the server
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Error destroying session:', err);
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+          }
+          // Session destroyed successfully
+          return res.json({ success: true, message: 'Admin logout successful' });
+        });
+      });
+    } else {
+      // If session does not exist or does not contain admin data
+      return res.status(401).json({ success: false, message: 'Admin not authenticated' });
+    }
+  });
+});
+
 // Endpoint for admin list of client
 app.get('/clients', (req, res) => {
   // SQL query to select all users

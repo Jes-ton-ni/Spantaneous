@@ -109,10 +109,25 @@ const Services = () => {
   // Function to handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setNewAppointment(prevAppointment => ({
-      ...prevAppointment,
-      [name]: value
-    }));
+    
+    // If the changed input is 'time', adjust the value
+    if (name === 'time') {
+      // Extract the selected hour from the time input
+      const selectedHour = value.split(':')[0];
+      // Set the minutes to '00'
+      const formattedTime = `${selectedHour}:00`;
+      // Update the state with the formatted time
+      setNewAppointment(prevAppointment => ({
+        ...prevAppointment,
+        [name]: formattedTime
+      }));
+    } else {
+      // For other inputs, update the state normally
+      setNewAppointment(prevAppointment => ({
+        ...prevAppointment,
+        [name]: value
+      }));
+    }
   };  
 
   const fetchServices = async () => {

@@ -1,14 +1,48 @@
-import React, { useState , useEffect} from 'react';
+import React, { useState , useEffect, useCallback} from 'react';
 import { FaTachometerAlt, FaUsers, FaBriefcase, FaCalendarAlt, FaUserFriends, FaUserTie } from 'react-icons/fa';
 import Logo from '../assets/img/Logo.png';
 
 const Admin = () => {
   // State to track active tab
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const togglePasswordModal = () => setShowPasswordModal(!showPasswordModal);
+
+  // Function to check login status and user data
+  const checkLoginStatus = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:5000/admin/check-login', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Set isLoggedIn state
+        setIsLoggedIn(data.isLoggedIn);
+      } else {
+        // If response is not ok, set isLoggedIn to false
+        setIsLoggedIn(false);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      // Handle error, e.g., show an error message to the user
+    }
+  }, []); 
+
+  useEffect(() => {
+    // Call the function to check login status when the component mounts
+    checkLoginStatus();
+  }, [checkLoginStatus]);
+
+  // Redirect to login page if user is not logged in
+  useEffect(() => {
+    if (isLoggedIn === false) {
+      window.location.href = '/adminlogin';
+    }
+  }, [isLoggedIn]);
    
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -33,6 +67,31 @@ const Admin = () => {
       setAlertMessage("");
     }, 2000); // Hides the message after 3 seconds (3000 milliseconds)
   };
+
+  
+  const Logout = async (e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    try {
+      const response = await fetch('http://localhost:5000/admin/logout', {
+        method: 'POST',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        // Logout successful
+        console.log('Logout successful');
+        // Redirect to the login page
+        window.location.href = '/adminlogin';
+      } else {
+        // Logout failed
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      // Handle error, display error message or any appropriate action
+    }
+  };
+
+
   // Content components
   const DashboardContent = () => {
     // State variables for KPIs
@@ -1304,12 +1363,7 @@ const Admin = () => {
         return null;
     }
   };
-
-  // Logout button
-  const Logout = () => {
-    console.log('Logout clicked');
-  };
-
+  
   return (
     <div className="flex flex-col lg:flex-row">
       {/* Sidebar */}

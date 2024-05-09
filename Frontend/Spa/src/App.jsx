@@ -8,6 +8,8 @@ import Booking from './Pages/Booking'
 import Admin from './Pages/Admin'
 import Employee from './Pages/Employee'
 import Profile from './Pages/Profile'
+import AdminLogin from './Pages/adminLogin'
+import EmployeeLogin from './Pages/employeeLogin'
 import { BrowserRouter as Router,Route, Routes } from 'react-router-dom'
 
 const App = () => {
@@ -17,13 +19,15 @@ const App = () => {
       <Routes>
         <Route path="/" element = {<Home/>}/>
         <Route path="/about" element = {<About/>}/>
-        <Route path="/login" element = {<Login/>}/>
+        <Route path="/login" element = {<Login/>}/>        
         <Route path="/services" element = {<Services/>}/>
         <Route path="/contact" element = {<Contact/>}/>
         <Route path="/booking" element = {<Booking/>}/>
         <Route path="/Admin" element = {<Admin/>}/>
         <Route path="/Employee" element = {<Employee/>}/>
         <Route path="/Profile" element = {<Profile/>}/>
+        <Route path="/adminLogin" element = {<AdminLogin/>}/>
+        <Route path="/employeeLogin" element = {<EmployeeLogin/>}/>
       </Routes>
     </Router>
    </div> 
