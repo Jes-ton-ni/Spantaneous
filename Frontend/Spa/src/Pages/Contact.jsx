@@ -96,6 +96,7 @@ const Contactpage = () => {
               <div className="bg-dark p-1 ">
                 <iframe className="w-full h-[20rem] lg:h-[35.7rem]" src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d6534.2417537176225!2d123.72336418854759!3d13.144515873602993!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sph!4v1712553813306!5m2!1sen!2sph" style={{ border: 0 }} allowFullScreen="" loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
               </div>
+              
             </div>
           </div>
         </div>

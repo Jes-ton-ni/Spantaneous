@@ -25,11 +25,11 @@ DROP TABLE IF EXISTS `admin`;
 CREATE TABLE `admin` (
   `admin_id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(45) NOT NULL,
-  `password` varchar(45) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `Fname` varchar(45) NOT NULL,
   `Lname` varchar(45) NOT NULL,
   `email` varchar(45) NOT NULL,
-  `phone_number` varchar(11) NOT NULL,
+  `contact` varchar(11) NOT NULL,
   PRIMARY KEY (`admin_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -40,7 +40,7 @@ CREATE TABLE `admin` (
 
 LOCK TABLES `admin` WRITE;
 /*!40000 ALTER TABLE `admin` DISABLE KEYS */;
-INSERT INTO `admin` VALUES (1,'admin','admin','admin','admin','admin@gmail.com','09123456789');
+INSERT INTO `admin` VALUES (1,'admin','$2b$10$JUYIcWiZhbaGwDEo5rScveZXnAcVkct8xteT5mHjbW8FfoLIyfQWO','admin','admin','admin@gmail.com','09123456789');
 /*!40000 ALTER TABLE `admin` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -65,7 +65,7 @@ CREATE TABLE `appointments` (
   KEY `service_idFK_idx` (`service_booked`),
   CONSTRAINT `customer_idFK` FOREIGN KEY (`customer_id`) REFERENCES `users` (`user_id`),
   CONSTRAINT `service_idFK` FOREIGN KEY (`service_booked`) REFERENCES `services` (`service_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -74,9 +74,32 @@ CREATE TABLE `appointments` (
 
 LOCK TABLES `appointments` WRITE;
 /*!40000 ALTER TABLE `appointments` DISABLE KEYS */;
-INSERT INTO `appointments` VALUES (11,'2024-05-30 02:56:00',78,1,'please be gentle',1,0,1);
+INSERT INTO `appointments` VALUES (16,'2024-05-16 01:34:00',76,14,'',1,0,0),(17,'2024-06-05 06:43:00',76,14,'',0,0,0),(18,'2024-05-15 14:00:00',78,17,'',1,1,0),(19,'2024-05-16 11:00:00',77,14,'',1,1,0),(20,'2024-05-16 11:00:00',77,1,'skjfn sdjfh sidjfh dshfi dsi dsfihsd fjdsh fds hfdhsfhisd fisd',0,0,0);
 /*!40000 ALTER TABLE `appointments` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `appointments_AFTER_UPDATE` AFTER UPDATE ON `appointments` FOR EACH ROW BEGIN
+ -- Check if the appointment_status column has been updated
+    IF OLD.appointment_status != NEW.appointment_status THEN
+        -- Update the status column in the assigned_employee table
+        UPDATE assigned_employee
+        SET status = NEW.appointment_status
+        WHERE appointment_id = OLD.appointment_id;
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `assigned_employee`
@@ -89,14 +112,13 @@ CREATE TABLE `assigned_employee` (
   `id` int NOT NULL AUTO_INCREMENT,
   `appointment_id` int NOT NULL,
   `employee_id` int NOT NULL,
-  `service_category` varchar(45) NOT NULL,
   `status` tinyint DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `appfk_idx` (`appointment_id`),
   KEY `empfk_idx` (`employee_id`),
   CONSTRAINT `appfk` FOREIGN KEY (`appointment_id`) REFERENCES `appointments` (`appointment_id`),
   CONSTRAINT `empfk` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -105,7 +127,7 @@ CREATE TABLE `assigned_employee` (
 
 LOCK TABLES `assigned_employee` WRITE;
 /*!40000 ALTER TABLE `assigned_employee` DISABLE KEYS */;
-INSERT INTO `assigned_employee` VALUES (49,11,2,'Massage',0);
+INSERT INTO `assigned_employee` VALUES (59,16,2,0),(60,19,2,1),(61,18,2,1);
 /*!40000 ALTER TABLE `assigned_employee` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -119,18 +141,16 @@ DROP TABLE IF EXISTS `employee`;
 CREATE TABLE `employee` (
   `employee_id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(45) NOT NULL,
-  `password` varchar(45) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `Fname` varchar(45) NOT NULL,
   `Lname` varchar(45) NOT NULL,
-  `time_from` timestamp NOT NULL,
-  `time_to` timestamp NOT NULL,
   `email` varchar(45) NOT NULL,
-  `phone` varchar(45) NOT NULL,
+  `contact` varchar(45) NOT NULL,
   PRIMARY KEY (`employee_id`),
   UNIQUE KEY `email_UNIQUE` (`email`),
   UNIQUE KEY `username_UNIQUE` (`username`),
-  UNIQUE KEY `phone_UNIQUE` (`phone`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `phone_UNIQUE` (`contact`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -139,7 +159,7 @@ CREATE TABLE `employee` (
 
 LOCK TABLES `employee` WRITE;
 /*!40000 ALTER TABLE `employee` DISABLE KEYS */;
-INSERT INTO `employee` VALUES (1,'try','password','try','try','2008-10-23 05:33:56','2008-10-23 05:33:56','try@gmail.com','09465845'),(2,'artoro','password','James','Arthur','2008-10-23 05:33:56','2008-10-23 05:33:56','artoro@gmail.com','09384384384');
+INSERT INTO `employee` VALUES (2,'artoro','$2b$10$fMFYpvFDchZZifWZ3gSzsegmCbQraDdma/vk6ZLK2zZBis8/KcdxG','James','Arthur','artoro@gmail.com','0987654321'),(11,'m2','$2b$10$IVk6qes5KKGtYAe8C35.EuM1RA21oIZH937JanzQgJblxAbTt1SNq','Employee2','m2','m2@gmail.com','0123456789'),(13,'m3','$2b$10$VnePd5fDdm4xn/JJfSaBF.kejGd1KWZhhRrgempLMsCjY0j3Awlfi','Employee3','m3','m3@gmail.com','09123456789');
 /*!40000 ALTER TABLE `employee` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -193,7 +213,6 @@ CREATE TABLE `sessions` (
 
 LOCK TABLES `sessions` WRITE;
 /*!40000 ALTER TABLE `sessions` DISABLE KEYS */;
-INSERT INTO `sessions` VALUES ('EK0WGqlyDyCbkyAojydiRD-oTkjhRpaZ',1715180293,'{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-05-07T15:31:34.825Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\"},\"user\":{\"user_id\":76,\"username\":\"jesss\",\"Fname\":\"Jestoni\",\"Lname\":\"Vargas\",\"contact\":\"09468644454\",\"email\":\"jesss@gmail.com\"}}'),('VCGFxD6iv1JjgRXFtIAe__j8X5ToVOVa',1715212610,'{\"cookie\":{\"originalMaxAge\":86400000,\"expires\":\"2024-05-08T23:55:49.690Z\",\"secure\":false,\"httpOnly\":true,\"path\":\"/\"},\"user\":{\"user_id\":78,\"username\":\"alepse\",\"Fname\":\"kenneth\",\"Lname\":\"alepse\",\"contact\":\"09475867463\",\"email\":\"alepse@gmail.com\"}}');
 /*!40000 ALTER TABLE `sessions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -215,7 +234,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `username_UNIQUE` (`username`),
   UNIQUE KEY `email_UNIQUE` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=82 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -224,7 +243,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (76,'jesss','$2b$10$ZH10sgkBTq.Vck.FdkONdugR7xkbwzXHkMyjnRu2//KRnJVHyL0F6','Jestoni','Vargas','09468644454','jesss@gmail.com'),(77,'yong','$2b$10$0MhwrWDEdTWJ6Tf7tF1bMu7WzMDj7pfg1nAADoqjzfc/BD0y45EAm','Maidon Jeho','Duran','09847563748','yong@gmail.com'),(78,'alepse','$2b$10$7JzANwmXo4iaJwH2ZSQaweyRu6GJYbnlGTjQvKlKalPIa9bt/92He','kenneth','alepse','09475867463','alepse@gmail.com'),(79,'nebrej','$2b$10$tembpULl6.F6LnGPzvc7u.0mg8C.uEgmav3pvSEHLCEqWw6cbMGNe','john nebrej','rempis','09384756321','nebrej@gmail.com');
+INSERT INTO `users` VALUES (76,'jesss','$2b$10$wy8MMoBen40v7lyhkzbXUuHuroJazRSxzfBg42F5z6YY/eAw9jQUC','Jes','Vargas','09468644454','jesss@gmail.com'),(77,'yong','$2b$10$0MhwrWDEdTWJ6Tf7tF1bMu7WzMDj7pfg1nAADoqjzfc/BD0y45EAm','Maidon Jeho','Duran','09847563748','yong@gmail.com'),(78,'alepse','$2b$10$7JzANwmXo4iaJwH2ZSQaweyRu6GJYbnlGTjQvKlKalPIa9bt/92He','Kenneth','Alepse','09475867463','alepse@gmail.com'),(79,'nebrej','$2b$10$tembpULl6.F6LnGPzvc7u.0mg8C.uEgmav3pvSEHLCEqWw6cbMGNe','john nebrej','rempis','09384756321','nebrej@gmail.com'),(81,'nebredge','$2b$10$LFi7foWZ/Vp6/io3JfRcquPC6emtqxS4g9lce2rMlLz1pLMnKol4q','John Nebrej','Rempis','02934849449','nebredge@gmail.com');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -245,4 +264,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-05-08  8:00:58
+-- Dump completed on 2024-05-09 21:52:24
