@@ -404,6 +404,7 @@ const Employee = () => {
   
   const Appointment = () => {
     const [appointments, setAppointments] = useState([]);
+    const [employeeData, setEmployeeData] = useState([]);
     const [pendingAppointment, setPendingAppointment] = useState([]);
 
      // Define a function to fetch appointments from the server
@@ -434,7 +435,74 @@ const Employee = () => {
       //const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
       setPendingAppointment(pendingAppointment);
      // setAppointmentAccepted(acceptedAppointment);
-    }, [appointments])
+    }, [appointments]);
+
+    // Function to fetch employee data
+    const fetchEmployeeData = useCallback(async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get-employeeData', {
+          method: 'GET',
+          credentials: 'include' // Include cookies in the request
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Set isLoggedIn state
+          setEmployeeData(data.employeeData);
+        } else {
+          console.error('Failed to fetch user data:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        // Handle error
+      }
+    }, []); 
+
+    useEffect(() => {
+      fetchEmployeeData();
+    }, [fetchEmployeeData])
+
+    const handleAccept = async (appointmentId) =>  {
+      try {
+        const response = await fetch('http://localhost:5000/assigned-employees', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employee_id: employeeData.employee_id,
+            appointment_id: appointmentId,
+            status: 0, 
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to assign employee');
+        }
+
+        try {
+          // Make a PUT request to update the request status to 3 (declined)
+          const response = await fetch(`http://localhost:5000/appointments/${appointmentId}/request-status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ request_status: 1 }), // Assuming "request_status" is the field name
+          });
+  
+          if (!response.ok) {
+            throw new Error('Failed to update request status');
+          }
+  
+          // Remove the declined booking from the local state
+          setPendingAppointment(pendingAppointment.filter(appointment => appointment.appointment_id !== appointmentId));
+        } catch (error) {
+          console.error('Error declining appointment:', error);
+        }
+
+      } catch (error) {
+        console.error('Error assigning employee:', error);
+      }
+    };
 
     const handleDeclined = async (appointmentId) => {
       try {

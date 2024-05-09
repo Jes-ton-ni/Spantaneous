@@ -977,17 +977,6 @@ const Admin = () => {
     //assign the appointment to the employee
     const handleAssign = async (employeeId, bookingId) => {
       try {
-        // Find the selected booking using its ID
-        const selectedBooking = bookings.find(booking => booking.appointment_id === bookingId);
-        if (!selectedBooking) {
-          throw new Error('Selected booking not found');
-        }
-
-        //console.log('Selected Booking:', selectedBooking); // Log selected booking for debugging
-
-        const serviceCategory = selectedBooking.category; // Assign category to a variable for easier debugging
-        //console.log('Service Category:', serviceCategory); // Log service category for debugging
-
         const response = await fetch('http://localhost:5000/assigned-employees', {
           method: 'POST',
           headers: {
@@ -995,8 +984,7 @@ const Admin = () => {
           },
           body: JSON.stringify({
             employee_id: employeeId,
-            appointment_id: bookingId,
-            service_category: serviceCategory, 
+            appointment_id: bookingId, 
             status: 0, 
           }),
         });

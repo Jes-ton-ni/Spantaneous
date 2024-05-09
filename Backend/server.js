@@ -1031,17 +1031,17 @@ app.get('/assigned_employee', (req, res) => {
 // Endpoint to handle POST requests for assigning employees
 app.post('/assigned-employees', (req, res) => {
   // Extract data from the request body
-  const { employee_id, appointment_id, service_category, status } = req.body;
+  const { employee_id, appointment_id, status } = req.body;
 
   console.log('Received assidned-employee request:', req.body);
   // SQL query to insert data into the assigned_employee table
   const sql = `
-    INSERT INTO assigned_employee (employee_id, appointment_id, service_category, status)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO assigned_employee (employee_id, appointment_id, status)
+    VALUES (?, ?, ?)
   `;
 
   // Execute the SQL query
-  connection.query(sql, [employee_id, appointment_id, service_category, status], (err, results) => {
+  connection.query(sql, [employee_id, appointment_id, status], (err, results) => {
     if (err) {
       console.error('Error assigning employee:', err);
       return res.status(500).json({ success: false, message: 'Internal server error' });
@@ -1151,13 +1151,17 @@ app.get('/staffs', (req, res) => {
           UPPER(SUBSTRING(e.Lname, 1, 1)),
           LOWER(SUBSTRING(e.Lname, 2))
       ) AS name,
-      ae.service_category AS task,
+      s.category AS task,
       SUM(ae.status = 1) AS completedTasks,
       SUM(ae.status = 0) AS pendingTasks
     FROM
       employee e
     INNER JOIN
       assigned_employee ae ON e.employee_id = ae.employee_id
+    INNER JOIN 
+      appointments a ON a.appointment_id = ae.appointment_id
+    INNER JOIN
+      services s ON s.service_id = a.service_booked
     GROUP BY
       employee_id,
       name,
