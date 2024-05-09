@@ -7,12 +7,16 @@ const Login = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [identifier, setIdentifier] = useState(''); // Update state to hold identifier (username or email)
   const [loginPassword, setLoginPassword] = useState('');
-  const [signupUsername, setSignupUsername] = useState('');
-  const [signupPassword, setSignupPassword] = useState('');
-  const [signupFirstName, setSignupFirstName] = useState('');
-  const [signupLastName, setSignupLastName] = useState('');
-  const [signupPhone, setSignupPhone] = useState('');
-  const [signupEmail, setSignupEmail] = useState('');
+
+  const [signupData, setSignupData] = useState({
+    username: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    phone: ''
+  });
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Add state to track login status
 
   useEffect(() => {
@@ -78,6 +82,14 @@ const Login = () => {
     }
   };  
 
+  const handleSignupChange = (e) => {
+    const { name, value } = e.target;
+    setSignupData(prevFields => ({
+      ...prevFields,
+      [name]: value
+    }));
+  };
+
   const handleSignupSubmit = async (event) => {
     event.preventDefault();
     try {
@@ -87,14 +99,7 @@ const Login = () => {
           'Content-Type': 'application/json'
         },
         credentials: 'include', 
-        body: JSON.stringify({
-          username: signupUsername,
-          firstName: signupFirstName,
-          lastName: signupLastName,
-          email: signupEmail,
-          password: signupPassword,
-          phone: signupPhone
-        })
+        body: JSON.stringify(signupData)
       });
       const data = await response.json();
       console.log(data);
@@ -194,8 +199,9 @@ const Login = () => {
                   <input
                     type="text"
                     id="signup-firstname"
-                    value={signupFirstName}
-                    onChange={(e) => setSignupFirstName(e.target.value)}
+                    name="firstName"
+                    value={signupData.firstName}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -205,8 +211,9 @@ const Login = () => {
                   <input
                     type="text"
                     id="signup-lastname"
-                    value={signupLastName}
-                    onChange={(e) => setSignupLastName(e.target.value)}
+                    name="lastName"
+                    value={signupData.lastName}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -217,8 +224,9 @@ const Login = () => {
                   <input
                     type="text"
                     id="signup-username"
-                    value={signupUsername}
-                    onChange={(e) => setSignupUsername(e.target.value)}
+                    name="username"
+                    value={signupData.username}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -228,8 +236,9 @@ const Login = () => {
                   <input
                     type="email"
                     id="signup-email"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
+                    name="email"
+                    value={signupData.email}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -239,8 +248,9 @@ const Login = () => {
                   <input
                     type="password"
                     id="signup-password"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
+                    name="password"
+                    value={signupData.password}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     required
                   />
@@ -250,8 +260,9 @@ const Login = () => {
                   <input
                     type="tel"
                     id="signup-phone"
-                    value={signupPhone}
-                    onChange={(e) => setSignupPhone(e.target.value)}
+                    name="phone"
+                    value={signupData.phone}
+                    onChange={handleSignupChange}
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   />
                 </div>
