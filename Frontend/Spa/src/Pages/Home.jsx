@@ -78,7 +78,7 @@ const Home = () => {
         <Gallery />
       </section>
 
-      <section className="pt-[4rem] mx-auto border-t-[2rem] border-dark bg-cover bg-center transform scale-x-[-1]" style={{ backgroundImage: `url(${bg2})` }}>
+      <section className="pt-[4rem] mx-auto border-t-[2rem] border-dark bg-cover bg-center " style={{ backgroundImage: `url(${bg2})` }}>
         <Contact />
       </section>
 
