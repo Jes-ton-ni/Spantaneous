@@ -301,7 +301,7 @@ const Booking = () => {
                 {Object.entries(services).map(([category, servicesList]) => (
                   <optgroup label={category} key={category}>
                     {servicesList.map(service => (
-                      <option key={service.service_id} value={service.service_id}>{service.service_name}</option>
+                      <option key={service.service_id} value={service.service_id}>{service.service_name} - PHP{service.price.toFixed(2)}</option>
                     ))}
                   </optgroup>
                 ))}

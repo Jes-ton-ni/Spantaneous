@@ -146,11 +146,24 @@ const Admin = () => {
   const DashboardContent = () => {
     const [revenue, setRevenue] = useState([]);
     const [bookings, setBookings] = useState([]);
+    const [pendingAppointment, setPendingAppointment] = useState([]);
+    const [completedAppointment, setCompletedAppointment] = useState([]);
     const [appointmentsToday, setAppointmentsToday] = useState([]);
     const [occupancyRate, setOccupancyRate] = useState(0);
     const [averageTreatmentTime, setAverageTreatmentTime] = useState(0);
     const [appointmentAvailability, setAppointmentAvailability] = useState([]);
+    const [employees, setEmployees] = useState([]); // State to store employees fetched from the database
     const [employeePerformance, setEmployeePerformance] = useState([]);
+    const [users, setUsers] = useState([]); // State to store users fetched from the database
+    const [services, setServices] = useState({
+      'All': [],
+      'Massage': [],
+      'Facial': [],
+      'Nail Treatment': [],
+      'Body Treatment': [],
+      'Packages': []
+    });
+    const [category, setCategory] = useState([]);
 
     const fetchRevenue = async () => {
       try {
@@ -191,6 +204,14 @@ const Admin = () => {
       return () => {
       };
     }, []);
+
+    useEffect(() => {
+      const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
+      setPendingAppointment(pendingAppointment);
+      const completedAppointment = bookings.filter(booking => booking.request_status === 1);
+      setCompletedAppointment(completedAppointment);
+    }, [bookings]);
+    
     
     // Function to fetch data and update state
     const fetchData = async () => {
@@ -270,34 +291,111 @@ const Admin = () => {
       });
       return Object.values(compiledTasks);
     };
+
+    // Function to fetch employees data from the /employees endpoint
+    const fetchEmployees = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/employees');
+        const data = await response.json();
+        if (response.ok) {
+          setEmployees(data.users);
+        } else {
+          console.error('Error fetching employees:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    };
+  
+    // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchEmployees();
+    }, []); // Empty dependency array ensures this effect runs only once, equivalent to componentDidMount
+
+    // Function to fetch clients data from the /clients endpoint
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/clients');
+        const data = await response.json();
+        if (response.ok) {
+          setUsers(data.users);
+        } else {
+          console.error('Error fetching clients:', data.message);
+        }
+      } catch (error) {
+        console.error('Error fetching clients:', error);
+      }
+    };
+
+    // useEffect hook to fetch data when the component mounts
+    useEffect(() => {
+      fetchUsers();
+    }, []); // Empty dependency array ensures this effect runs only once, equivalent to componentDidMount
+
+    // Define fetchServices function
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/services');
+        if (!response.ok) {
+          throw new Error('Failed to fetch services');
+        }
+        const data = await response.json();
+        setServices(data.services);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    };
+
+    useEffect(() => {
+      // Call fetchServices function when the component mounts
+      fetchServices();
+    }, []); // Empty dependency array to fetch data only once when the component mounts
   
     return (
       <div className="container mx-auto p-8">
         <h2 className="text-3xl font-bold mb-6 text-gray-800">Dashboard</h2>
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-1">
           {/* Revenue */}
           <div className="bg-white rounded-md shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Revenue</h3>
             {revenue.length > 0 ? (
-              <p className="text-4xl font-bold text-center text-blue-500">
+              <p className="text-4xl font-bold text-blue-500">
                 PHP {revenue}
               </p>
             ) : (
-              <p className="text-4xl font-bold text-center text-blue-500">
+              <p className="text-4xl font-bold text-blue-500">
                 PHP 0.00
               </p>
             )}            
           </div>
-          {/* Occupancy Rate */}
+        </div>
+        {/* KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 mt-6 gap-5">
+          {/* No. of Services Offered */}
           <div className="bg-white rounded-md shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Occupancy Rate</h3>
-            <p className="text-4xl font-bold text-center text-green-500">{occupancyRate}%</p>
+            <h3 className="text-lg font-semibold mb-4">No. of Services Offered</h3>
+            <p className="text-4xl font-bold text-center text-blue-500">{services.All.length}</p>
           </div>
-          {/* Average Treatment Time */}
           <div className="bg-white rounded-md shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Average Treatment Time</h3>
-            <p className="text-4xl font-bold text-center text-purple-500">{averageTreatmentTime} min</p>
+            <h3 className="text-lg font-semibold mb-4">Total Category</h3>
+            <p className="text-4xl font-bold text-center text-green-500">5</p>
+          </div>
+          {/* Completed Transactions */}
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Completed Transactions</h3>
+            <p className="text-4xl font-bold text-center text-purple-500">{completedAppointment.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Pending Appointments</h3>
+            <p className="text-4xl font-bold text-center text-blue-500">{pendingAppointment.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">No. Employee</h3>
+            <p className="text-4xl font-bold text-center text-green-500">{employees.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">No. Users</h3>
+            <p className="text-4xl font-bold text-center text-purple-500">{users.length}</p>
           </div>
         </div>
   
