@@ -179,7 +179,7 @@ const Nav = () => {
               <div className="relative" onClick={toggleDropdown}>
                 <div className="flex items-center justify-center bg-light hover:bg-gray-300 duration-500 text-dark text-xs font-semibold cursor-pointer px-3 py-2 rounded-md">
                   <img src={User} alt="User Profile" className="w-6 h-6 mr-2" />
-                  <span>{username}</span>
+                  <span>{userData.username}</span>
                 </div>
                 {/* Dropdown content */}
                 {showDropdown && (

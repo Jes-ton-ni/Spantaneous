@@ -45,17 +45,23 @@ const ScrollToTopButton = () => {
 };
 
 const Booking = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    service: '',
+  const [isLoggedIn, setIsLoggedIn] = useState(null);
+  // State for set an appointment form
+  const [newAppointment, setNewAppointment] = useState({
     date: '',
     time: '',
-    phone: '',
+    customer_id: '',
+    service_id: '',
+    service_name: '',
     message: ''
+  });  
+  const [userData, setUserData] = useState([]);
+  const [services, setServices] = useState({
+    'Massage': [],
+    'Facial': [],
+    'Nail Treatment': [],
+    'Body Treatment': []
   });
-
-  const [isLoggedIn, setIsLoggedIn] = useState(null);
 
   // Function to check login status
   const checkLoginStatus = async () => {
@@ -68,6 +74,7 @@ const Booking = () => {
         const data = await response.json(); // Parse response body as JSON
         // Check the value of isLoggedIn
         setIsLoggedIn(data.isLoggedIn);
+        setUserData(data.user);
       } else {
         setIsLoggedIn(false);
       }
@@ -90,14 +97,86 @@ const Booking = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(formData);
+  const fetchServices = async () => {
+    try {
+      // Make a GET request to fetch services from the server
+      const response = await fetch('http://localhost:5000/services');
+      if (!response.ok) {
+        throw new Error('Failed to fetch services');
+      }
+      // Parse the JSON response
+      const data = await response.json();
+      // Set the fetched services in the state
+      setServices(data.services);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+      // Handle errors if necessary
+    }
   };
+
+  const addAppointment = async () => {
+    try {
+      const requestData = {
+        date: newAppointment.date,
+        time: newAppointment.time,
+        customer_id: userData.user_id,
+        service_id: selectedService.service_id,
+        message: newAppointment.message
+      };
+
+      // Log the data being sent
+      //console.log('Sending appointment data:', requestData);
+
+      // Sending the form data in the request body
+      const response = await fetch('http://localhost:5000/set-appointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData),
+      });
+    
+      // Handling the response
+      if (!response.ok) {
+        swal({
+          title: 'Failed! ',
+          text: 'Field with * should not be empty.',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
+        //throw new Error('Failed to set an appointment');
+      }
+      else if (response.ok) {
+        swal({
+          title: 'Success!',
+          text: ' ',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        }).then(() => {   
+          setIsModalOpen(false);
+        });
+      }
+  
+      // Clearing the form fields after setting an appointment
+      setNewAppointment({
+        date: '',
+        time: '',
+        customer_id: '',
+        service_id: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error setting an appointment:', error);
+    }
+  };  
 
   useEffect(() => {
     document.title = 'Booking - Spa-ntaneous';
   }, []);
+
+
 
   return (
     <main>
@@ -120,14 +199,14 @@ const Booking = () => {
       <section className="flex justify-center items-center min-h-screen bg-cover bg-center" style={{ backgroundImage: `url(${back})` }}>
         <div className="max-w-[50rem] bg-white p-9 rounded-lg shadow-lg">
           <img src={logo} alt="Logo" className="mx-auto" />
-          <form className='grid grid-cols-2 gap-4' onSubmit={handleSubmit}>
+          <form className='grid grid-cols-2 gap-4'>
             <div className="col-span-2 sm:col-span-1">
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 type="text"
                 id="name"
                 name="name"
-                value={formData.name}
+                value={newAppointment.name}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
@@ -138,7 +217,7 @@ const Booking = () => {
                 type="email"
                 id="email"
                 name="email"
-                value={formData.email}
+                value={newAppointment.email}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
@@ -149,7 +228,7 @@ const Booking = () => {
                 type="tel"
                 id="phone"
                 name="phone"
-                value={formData.phone}
+                value={newAppointment.contact}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
@@ -159,7 +238,7 @@ const Booking = () => {
               <select
                 id="service"
                 name="service"
-                value={formData.service}
+                value={newAppointment.service}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               >
@@ -192,7 +271,7 @@ const Booking = () => {
                 type="date"
                 id="date"
                 name="date"
-                value={formData.date}
+                value={newAppointment.date}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
@@ -203,7 +282,7 @@ const Booking = () => {
                 type="time"
                 id="time"
                 name="time"
-                value={formData.time}
+                value={newAppointment.time}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
@@ -214,14 +293,15 @@ const Booking = () => {
                 id="message"
                 name="message"
                 rows="4"
-                value={formData.message}
+                value={newAppointment.message}
                 onChange={handleChange}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               ></textarea>
             </div>
             <div className="col-span-2 flex justify-center">
               <button
-                type="submit"
+                type="button"
+                onClick={addAppointment}
                 className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out"
               >
                 Submit
