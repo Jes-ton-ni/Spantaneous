@@ -407,8 +407,8 @@ const Employee = () => {
     const [employeeData, setEmployeeData] = useState([]);
     const [pendingAppointment, setPendingAppointment] = useState([]);
 
-     // Define a function to fetch appointments from the server
-     const fetchAppointments = async () => {
+    // Define a function to fetch appointments from the server
+    const fetchAppointments = async () => {
       try {
         // Make a GET request to the /appointments endpoint
         const response = await fetch('http://localhost:5000/appointments');
@@ -563,8 +563,9 @@ const Employee = () => {
     );
   };
   
-  
   const Tasks = () => {
+    const [employeeData, setEmployeeData] = useState([]);
+    const [tasks, setTasks] = useState([]);
     const [assignedTasks, setAssignedTasks] = useState([]);
     const [pendingTasks, setPendingTasks] = useState([]);
     const [completedTasks, setCompletedTasks] = useState([]);
@@ -580,33 +581,57 @@ const Employee = () => {
     });
     const [paymentMethod, setPaymentMethod] = useState('');
 
-    const fetchAssignedTask = async () => {
+    // Function to fetch employee data
+    const fetchEmployeeData = useCallback(async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get-employeeData', {
+          method: 'GET',
+          credentials: 'include' // Include cookies in the request
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Set isLoggedIn state
+          setEmployeeData(data.employeeData);
+        } else {
+          console.error('Failed to fetch user data:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        // Handle error
+      }
+    }, []); 
+
+    useEffect(() => {
+      fetchEmployeeData();
+    }, [fetchEmployeeData])
+
+    const fetchTask = async () => {
       try {
         const response = await fetch('http://localhost:5000/assigned_employee');
         const data = await response.json();
         if (response.ok) {
-          setAssignedTasks(data.appointments);
+          setTasks(data.appointments);
         } else {
           console.error('Error fetching employees:', data.message);
         }
       } catch (error) {
         console.error('Error fetching employees:', error);
       }
-    }
+    };    
 
     // useEffect hook to fetch data when the component mounts
     useEffect(() => {
-      fetchAssignedTask();
-      return () => {
-      };
+      fetchTask();
     }, []); 
 
     useEffect(() => {
+      const assignedTasks = tasks.filter(tasks => tasks.employee_id === employeeData.employee_id);
       const pendingTasks = assignedTasks.filter(task => task.appointment_status === 0);
       const completedTasks = assignedTasks.filter(task => task.appointment_status === 1);
+      setAssignedTasks(assignedTasks);
       setPendingTasks(pendingTasks);
       setCompletedTasks(completedTasks);
-    }, [assignedTasks]);
+    }, [tasks]);
   
     useEffect(() => {
       const dates = [...new Set(completedTasks.map(task => new Date(task.date_appointed).toLocaleDateString()))];
@@ -644,8 +669,7 @@ const Employee = () => {
           throw new Error('Failed to update request status');
         }
 
-        // Remove the declined booking from the local state
-        setPendingTasks(pendingTasks.filter(appointment => appointment.appointment_id !== appointmentId));
+        fetchTask();
       } catch (error) {
         console.error('Error declining appointment:', error);
       }      

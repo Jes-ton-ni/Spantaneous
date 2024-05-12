@@ -145,18 +145,34 @@ const Admin = () => {
   // Content components
   const DashboardContent = () => {
     // State variables for KPIs
-    const [revenue, setRevenue] = useState(0);
+    const [revenue, setRevenue] = useState([]);
     const [occupancyRate, setOccupancyRate] = useState(0);
     const [averageTreatmentTime, setAverageTreatmentTime] = useState(0);
     const [bookingTrends, setBookingTrends] = useState([]);
     const [appointmentAvailability, setAppointmentAvailability] = useState([]);
     const [employeePerformance, setEmployeePerformance] = useState([]);
+
+    const fetchRevenue = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/admin/revenue');
+        if (!response.ok) {
+          throw new Error('Failed to fetch revenue');
+        }
+        const data = await response.json();
+        setRevenue(data.revenue[0].revenue);
+      } catch (error) {
+        console.error('Error fetching revenue:', error);
+      }
+    };    
+
+    useEffect(() => {
+      fetchRevenue();
+    })
     
     // Function to fetch data and update state
     const fetchData = async () => {
       // Fetch data for KPIs
       const kpiData = await fetchKPIsData();
-      setRevenue(kpiData.revenue);
       setOccupancyRate(kpiData.occupancyRate);
       setAverageTreatmentTime(kpiData.averageTreatmentTime);
   
@@ -173,7 +189,6 @@ const Admin = () => {
     const fetchKPIsData = async () => {
       // Example data fetching logic for KPIs
       return {
-        revenue: 0,
         occupancyRate: 0,
         averageTreatmentTime: 0,
       };
@@ -229,7 +244,7 @@ const Admin = () => {
           {/* Revenue */}
           <div className="bg-white rounded-md shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Revenue</h3>
-            <p className="text-4xl font-bold text-center text-blue-500">PHP {revenue.toFixed(2)}</p>
+            <p className="text-4xl font-bold text-center text-blue-500">PHP {revenue}</p>
           </div>
           {/* Occupancy Rate */}
           <div className="bg-white rounded-md shadow-md p-6">

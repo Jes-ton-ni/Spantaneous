@@ -680,6 +680,22 @@ app.post('/employee/logout', (req, res) => {
   }
 });
 
+// Endpoint for revenue
+app.get('/admin/revenue', (req, res) => {
+  //SQL query to select all revenue
+  const sql = ' SELECT * FROM revenue';
+
+  // Execute the SQL query
+  connection.query(sql, (err, results) => {
+    if (err) {
+      console.error('Error executing SQL query:', err);
+      return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+    // Send the list of users as the response
+    return res.json({ success: true, revenue: results });
+  });
+});
+
 // Endpoint for admin list of client
 app.get('/clients', (req, res) => {
   // SQL query to select all users
