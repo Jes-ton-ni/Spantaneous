@@ -776,7 +776,8 @@ app.get('/services', (req, res) => {
       'Massage': [],
       'Facial': [],
       'Nail Treatment': [],
-      'Body Treatment': []
+      'Body Treatment': [],
+      'Packages': []
     };
     // Iterate over the results and push each service into the corresponding category
     results.forEach(service => {

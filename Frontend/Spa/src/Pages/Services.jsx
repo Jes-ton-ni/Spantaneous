@@ -54,7 +54,8 @@ const Services = () => {
     'Massage': [],
     'Facial': [],
     'Nail Treatment': [],
-    'Body Treatment': []
+    'Body Treatment': [],
+    'Packages': []
   });
 
   // State for set an appointment form
@@ -100,8 +101,6 @@ const Services = () => {
   };
 
   useEffect(() => {
-    // Fetch services from the server when the component mounts
-    fetchServices();
     // Call the function to check login status when the component mounts
     checkLoginStatus();
   }, []);
@@ -146,6 +145,11 @@ const Services = () => {
       // Handle errors if necessary
     }
   };
+
+  useEffect(() => {
+    // Fetch services from the server when the component mounts
+    fetchServices();
+  }, []);
 
   const handleTabSelect = (index) => {
     setActiveTab(index);
@@ -250,25 +254,32 @@ const Services = () => {
             <Tab className={`text-dark hover:text-light focus:outline-none focus:text-text-light font-medium text-lg py-4 px-6 cursor-pointer hover:bg-dark ${activeTab === 2 ? 'border-b-4 border-dark' : ''}`} onClick={() => handleTabSelect(2)}>Facial</Tab>
             <Tab className={`text-dark hover:text-light focus:outline-none focus:text-text-light font-medium text-lg py-4 px-6 cursor-pointer hover:bg-dark ${activeTab === 3 ? 'border-b-4 border-dark' : ''}`} onClick={() => handleTabSelect(3)}>Nail Treatment</Tab>
             <Tab className={`text-dark hover:text-light focus:outline-none focus:text-text-light font-medium text-lg py-4 px-6 cursor-pointer hover:bg-dark ${activeTab === 4 ? 'border-b-4 border-dark' : ''}`} onClick={() => handleTabSelect(4)}>Body Treatment</Tab>
+            <Tab className={`text-dark hover:text-light focus:outline-none focus:text-text-light font-medium text-lg py-4 px-6 cursor-pointer hover:bg-dark ${activeTab === 5 ? 'border-b-4 border-dark' : ''}`} onClick={() => handleTabSelect(4)}>Packages</Tab>
           </TabList>
 
-          {/* Render services dynamically based on active tab */}
-          {Object.keys(services).map((category, index) => (
-            <TabPanel key={index} className={`transition duration-300 ease-in-out ${activeTab === index ? 'opacity-100' : 'opacity-0'}`}>
-              <h2 className="text-2xl font-bold m-9 text-center">{category} Services</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services[category].map((service, serviceIndex) => (
-                  <div key={serviceIndex} className="bg-white rounded-lg shadow-md p-6">
-                    <img src={`http://localhost:5000/${service.image_path}`} alt={service.service_name} className="w-full h-[20rem] bg-gray-300 mb-4 rounded-lg bg-cover bg-center" />
-                    <h3 className="text-lg font-semibold mb-2">{service.service_name}</h3>
-                    <p className="text-gray-800">{service.description}</p>
-                    <p className="text-gray-600 mt-2">Price: PHP {service.price}</p>
-                    <button onClick={() => { handleServiceSelect(service); handleReserveClick();}} className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out">Reserve</button>
-                  </div>
-                ))}
-              </div>
-            </TabPanel>
-          ))}
+          {/* Render services dynamically based on active tab */}      
+            {Object.keys(services).map((category, index) => (
+              <TabPanel key={index} className={`transition duration-300 ease-in-out ${activeTab === index ? 'opacity-100' : 'opacity-0'}`}>
+                <h2 className="text-2xl font-bold m-9 text-center">{category} Services</h2>
+                {services[category].length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {services[category].map((service, serviceIndex) => (
+                        <div key={serviceIndex} className="bg-white rounded-lg shadow-md p-6">
+                          <img src={`http://localhost:5000/${service.image_path}`} alt={service.service_name} className="w-full h-[20rem] bg-gray-300 mb-4 rounded-lg bg-cover bg-center" />
+                          <h3 className="text-lg font-semibold mb-2">{service.service_name}</h3>
+                          <p className="text-gray-800">{service.description}</p>
+                          <p className="text-gray-600 mt-2">Price: PHP {service.price}</p>
+                          <button onClick={() => { handleServiceSelect(service); handleReserveClick();}} className="bg-dark hover:bg-light-dark text-white font-bold py-2 px-4 rounded mt-4 transition duration-300 ease-in-out">Reserve</button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-gray-500 text-center">No available</p>
+                )};
+              </TabPanel>
+            ))}
         </Tabs>
       </section>
       {/* Modal for reservation */}

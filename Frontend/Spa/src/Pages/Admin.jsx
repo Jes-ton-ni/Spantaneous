@@ -651,7 +651,8 @@ const Admin = () => {
       'Massage': [],
       'Facial': [],
       'Nail Treatment': [],
-      'Body Treatment': []
+      'Body Treatment': [],
+      'Packages': []
     });
   
     // State for new service form
@@ -969,6 +970,7 @@ const Admin = () => {
             <option value="Facial">Facial</option>
             <option value="Nail Treatment">Nail Treatment</option>
             <option value="Body Treatment">Body Treatment</option>
+            <option value="Packages">Packages</option>
           </select>
           <input
             type="file"
@@ -1053,6 +1055,7 @@ const Admin = () => {
                   <option value="Facial">Facial</option>
                   <option value="Nail Treatment">Nail Treatment</option>
                   <option value="Body Treatment">Body Treatment</option>
+                  <option value="Packages">Packages</option>
                 </select>
                 <input
                   type="file"

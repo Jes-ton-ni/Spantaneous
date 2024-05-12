@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { HiOutlineArrowUp } from 'react-icons/hi'; 
 import { animateScroll as scroll } from 'react-scroll'; 
 import Nav from '../components/Nav';
@@ -52,7 +52,6 @@ const Booking = () => {
     time: '',
     customer_id: '',
     service_id: '',
-    service_name: '',
     message: ''
   });  
   const [userData, setUserData] = useState([]);
@@ -60,7 +59,8 @@ const Booking = () => {
     'Massage': [],
     'Facial': [],
     'Nail Treatment': [],
-    'Body Treatment': []
+    'Body Treatment': [],
+    'Packages': []
   });
 
   // Function to check login status
@@ -74,7 +74,6 @@ const Booking = () => {
         const data = await response.json(); // Parse response body as JSON
         // Check the value of isLoggedIn
         setIsLoggedIn(data.isLoggedIn);
-        setUserData(data.user);
       } else {
         setIsLoggedIn(false);
       }
@@ -89,12 +88,49 @@ const Booking = () => {
     checkLoginStatus();
   }, []);
 
+  // Function to fetch user data
+  const fetchUserData = useCallback(async () => {
+    try {
+      const response = await fetch('http://localhost:5000/get-userData', {
+        method: 'GET',
+        credentials: 'include' // Include cookies in the request
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Set isLoggedIn state
+        setUserData(data.userData);
+      } else {
+        console.error('Failed to fetch user data:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      // Handle error
+    }
+  }, []); 
+
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData])
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    // If the changed input is 'time', adjust the value
+    if (name === 'time') {
+      // Extract the selected hour from the time input
+      const selectedHour = value.split(':')[0];
+      // Set the minutes to '00'
+      const formattedTime = `${selectedHour}:00`;
+      // Update the state with the formatted time
+      setNewAppointment(prevAppointment => ({
+        ...prevAppointment,
+        [name]: formattedTime
+      }));
+    } else {
+      setNewAppointment(prevState => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
   };
 
   const fetchServices = async () => {
@@ -114,13 +150,18 @@ const Booking = () => {
     }
   };
 
+  useEffect(() => {
+    // Fetch services from the server when the component mounts
+    fetchServices();
+  }, []);
+
   const addAppointment = async () => {
     try {
       const requestData = {
         date: newAppointment.date,
         time: newAppointment.time,
         customer_id: userData.user_id,
-        service_id: selectedService.service_id,
+        service_id: newAppointment.service_id,
         message: newAppointment.message
       };
 
@@ -145,7 +186,7 @@ const Booking = () => {
           buttons: false,
           timer: 1500,
         });
-        //throw new Error('Failed to set an appointment');
+        throw new Error('Failed to set an appointment');
       }
       else if (response.ok) {
         swal({
@@ -154,8 +195,6 @@ const Booking = () => {
           icon: 'success',
           buttons: false,
           timer: 1500,
-        }).then(() => {   
-          setIsModalOpen(false);
         });
       }
   
@@ -175,8 +214,6 @@ const Booking = () => {
   useEffect(() => {
     document.title = 'Booking - Spa-ntaneous';
   }, []);
-
-
 
   return (
     <main>
@@ -201,72 +238,80 @@ const Booking = () => {
           <img src={logo} alt="Logo" className="mx-auto" />
           <form className='grid grid-cols-2 gap-4'>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Name
+                <span className='text-gray-500'> (Default)</span>
+              </label>
               <input
                 type="text"
                 id="name"
                 name="name"
-                value={newAppointment.name}
-                onChange={handleChange}
+                value={`${userData.Fname || ''} ${userData.Lname || ''}`}
+                disabled
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+                <span className='text-gray-500'> (Default)</span>
+              </label>
               <input
                 type="email"
                 id="email"
                 name="email"
-                value={newAppointment.email}
-                onChange={handleChange}
+                defaultValue={userData.email}
+                disabled
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number
+                <span className='text-gray-500'> (Default)</span>
+              </label>
               <input
                 type="tel"
                 id="phone"
                 name="phone"
-                value={newAppointment.contact}
-                onChange={handleChange}
+                defaultValue={userData.contact}
+                disabled
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="service" className="block text-sm font-medium text-gray-700">Service</label>
+              <label htmlFor="service" className="block text-sm font-medium text-gray-700">
+                Service
+                <span style={{ color: 'red' }}>*</span>
+              </label>
               <select
                 id="service"
                 name="service"
-                value={newAppointment.service}
-                onChange={handleChange}
+                value={newAppointment.service_id} // Use service_id instead of service
+                onChange={(e) => {
+                  const selectedServiceId = e.target.value;
+                  setNewAppointment(prevState => ({
+                    ...prevState,
+                    service_id: selectedServiceId,
+                  }));
+                }}
                 className="mt-1 p-2 border border-gray-300 rounded-md w-full"
               >
                 <option value="">-- Select a service --</option>
-                <optgroup label="Massage">
-                  <option value="Swedish Massage">Swedish Massage</option>
-                  <option value="Deep Tissue Massage">Deep Tissue Massage</option>
-                  <option value="Hot Stone Massage">Hot Stone Massage</option>
-                </optgroup>
-                <optgroup label="Facial">
-                  <option value="Classic Facial">Classic Facial</option>
-                  <option value="Anti-Aging Facial">Anti-Aging Facial</option>
-                  <option value="Hydrating Facial">Hydrating Facial</option>
-                </optgroup>
-                <optgroup label="Nail Treatment">
-                  <option value="Manicure">Manicure</option>
-                  <option value="Pedicure">Pedicure</option>
-                  <option value="Gel Nail Extension">Gel Nail Extension</option>
-                </optgroup>
-                <optgroup label="Body Treatment">
-                  <option value="Body Scrub">Body Scrub</option>
-                  <option value="Body Wrap">Body Wrap</option>
-                  <option value="Aromatherapy">Aromatherapy</option>
-                </optgroup>
+                {Object.entries(services).map(([category, servicesList]) => (
+                  <optgroup label={category} key={category}>
+                    {servicesList.map(service => (
+                      <option key={service.service_id} value={service.service_id}>{service.service_name}</option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                Date
+                <span style={{ color: 'red' }}>*</span>
+              </label>
               <input
                 type="date"
                 id="date"
@@ -277,7 +322,10 @@ const Booking = () => {
               />
             </div>
             <div className="col-span-2 sm:col-span-1">
-              <label htmlFor="time" className="block text-sm font-medium text-gray-700">Time</label>
+              <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+                Time
+                <span style={{ color: 'red' }}>*</span>
+              </label>
               <input
                 type="time"
                 id="time"

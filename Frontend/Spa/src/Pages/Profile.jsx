@@ -83,12 +83,17 @@ const Profile = () => {
     try {
       // Make a GET request to the /appointments endpoint
       const response = await fetch('http://localhost:5000/appointments');
-      if (!response.ok) {
+      const data = await response.json();
+      if (response.ok){
+        // Sort the appointments by date
+        data.appointments.sort((a, b) => new Date(a.date_appointed) - new Date(b.date_appointed));
+        // Update the bookings state with the fetched appointments
+        setBookings(data.appointments);
+      } else {
         throw new Error('Failed to fetch appointments');
       }
-      const data = await response.json();
-      // Update the bookings state with the fetched appointments
-      setBookings(data.appointments);
+      
+      
     } catch (error) {
       console.error('Error fetching appointments:', error);
     }
