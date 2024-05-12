@@ -1202,20 +1202,22 @@ app.get('/staffs', (req, res) => {
           LOWER(SUBSTRING(e.Lname, 2))
       ) AS name,
       s.category AS task,
-      SUM(ae.status = 1) AS completedTasks,
-      SUM(ae.status = 0) AS pendingTasks
+      a.date_appointed AS sched,
+      COALESCE(SUM(ae.status = 1), 0) AS completedTasks,
+      COALESCE(SUM(ae.status = 0), 0) AS pendingTasks
     FROM
       employee e
-    INNER JOIN
+    LEFT JOIN
       assigned_employee ae ON e.employee_id = ae.employee_id
-    INNER JOIN 
+    LEFT JOIN
       appointments a ON a.appointment_id = ae.appointment_id
-    INNER JOIN
+    LEFT JOIN
       services s ON s.service_id = a.service_booked
     GROUP BY
       employee_id,
       name,
-      task
+      task,
+      sched
     `;
 
     // Execute the SQL query

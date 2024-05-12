@@ -244,8 +244,23 @@ const Profile = () => {
       });
       
       if (!response.ok) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         throw new Error('Failed to update payment status');
       }
+
+      swal({
+        title: 'Success',
+        text: 'Payment successful',
+        icon: 'success',
+        buttons: false,
+        timer: 1500,
+      });
 
       fetchAppointments();
       setShowPaymentModal(!showPaymentModal);
@@ -296,7 +311,7 @@ const Profile = () => {
       </header>
       
       <section className="px-4 py-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="border-light-dark p-4 lg:p-8 bg-white border-2 rounded-lg shadow-md  ">
+        <div className="border-light-dark p-4 lg:p-8 bg-white border-2 rounded-lg shadow-md  ">
           {alertMessage && (
             <div className="mb-4 bg-green-500 text-white py-2 px-4 rounded-md shadow-lg ">
               {alertMessage}
@@ -328,7 +343,8 @@ const Profile = () => {
         
         {showModal && (
           <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
-            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75">
+            </div>
             <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
@@ -432,7 +448,8 @@ const Profile = () => {
 
         {showPasswordModal && (
           <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
-            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+            <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75">
+            </div>
             <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
               <div className="modal-content py-4 text-left px-6">
                 <div className="flex justify-between items-center pb-3">
@@ -507,7 +524,8 @@ const Profile = () => {
 
         {showPaymentModal && (
         <div className="fixed inset-0 z-50 overflow-auto flex justify-center items-center">
-          <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75"></div>
+          <div className="modal-overlay absolute inset-0 bg-gray-500 opacity-75">
+          </div>
           <div className="modal-container bg-white w-full max-w-md mx-auto rounded shadow-lg z-50 overflow-y-auto">
             <div className="modal-content py-4 text-left px-6">
               <div className="flex justify-between items-center pb-3">
@@ -524,7 +542,7 @@ const Profile = () => {
                     <p className="text-gray-700 mb-2">Name: {selectedAppointment.name}</p>
                       <p className="text-gray-700 mb-2">Service: {selectedAppointment.service}</p>
                       <p className="text-gray-700 mb-2">Schedule: {new Date(selectedAppointment.date_appointed).toLocaleDateString()} {new Date(selectedAppointment.date_appointed).toLocaleTimeString()}</p>
-                      <p className="text-gray-700 mb-2">Total: PHP{selectedAppointment.price_final}</p>
+                      <p className="text-gray-700 mb-2">Total: PHP{selectedAppointment.price_final.toFixed(2) }</p>
                     </div>
                   )}
                   <form onSubmit={handlePayment}>
@@ -575,27 +593,31 @@ const Profile = () => {
         )}
 
         {/* View Appointments Section */}
-        <div className={`w-full  ${appointments.length > 2 ? 'overflow-y-auto h-[32rem]' : ''}`}>
+        <div className={`w-full ${appointments.length > 2 ? 'overflow-y-auto h-[32rem]' : ''}`}>
           <div className="bg-dark p-4 lg:p-8 rounded-lg shadow-md">
-            <h2 className="text-lg font-semibold text-white mb-4text-lg  mb-4 sticky top-0 bg-dark py-2 border-b-white border-b-2">View Appointments</h2>
-            {appointments.map((appointment, index) => (
-              <div className="border border-light-dark p-4 mb-4 rounded-lg shadow-md" key={index}>
-                <h3 className="font-semibold text-lg text-white">{appointment.service}</h3>
-                <p className="text-gray-300"><strong>Name:</strong> {appointment.name}</p>
-                <p className="text-gray-300"><strong>Schedule:</strong> {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
-                <p className="text-gray-300"><strong>Total:</strong> PHP {appointment.price_final}</p>
-                <p className="text-gray-300">
-                  <strong>Status:</strong> {appointment.request_status === 1 ? 'Approved' : appointment.request_status === 2 ? 'Declined' : 'Pending'}
-                </p>
-                {appointment.request_status === 1 && appointment.payment_status === 0 && (
-                  <button className="bg-green-500 text-white rounded px-2 py-1 mt-2" onClick={() => handlePayment(index)}>Pay</button>
-                )}
-                {appointment.payment_status === 1 && (
-                  <p className="text-green-500 font-semibold mt-2">Paid</p>
-                )}
-                {index !== appointments.length - 1 && <hr className="border-gray-400 my-4" />}
-              </div>
-            ))}
+            <h2 className="text-lg font-semibold text-white mb-4 sticky top-0 bg-dark py-2 border-b-white border-b-2">View Appointments</h2>
+            {appointments.length > 0 ? (
+              appointments.map((appointment, index) => (
+                <div className="border border-light-dark p-4 mb-4 rounded-lg shadow-md" key={index}>
+                  <h3 className="font-semibold text-lg text-white">{appointment.service}</h3>
+                  <p className="text-gray-300"><strong>Name:</strong> {appointment.name}</p>
+                  <p className="text-gray-300"><strong>Schedule:</strong> {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
+                  <p className="text-gray-300"><strong>Total:</strong> PHP {appointment.price_final.toFixed(2)}</p>
+                  <p className="text-gray-300">
+                    <strong>Status:</strong> {appointment.request_status === 1 ? 'Approved' : appointment.request_status === 2 ? 'Declined' : 'Pending'}
+                  </p>
+                  {appointment.request_status === 1 && appointment.payment_status === 0 && (
+                    <button className="bg-green-500 text-white rounded px-2 py-1 mt-2" onClick={() => handlePayment(index)}>Pay</button>
+                  )}
+                  {appointment.payment_status === 1 && (
+                    <p className="text-green-500 font-semibold mt-2">Paid</p>
+                  )}
+                  {index !== appointments.length - 1 && <hr className="border-gray-400 my-4" />}
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500">No appointments</p>
+            )}
           </div>
         </div>
       </section>

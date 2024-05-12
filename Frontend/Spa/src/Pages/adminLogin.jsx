@@ -52,7 +52,6 @@ const Login = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setIsLoggedIn(true);
         swal({
           title: 'Login Successful!',
           text: ' ',
@@ -63,7 +62,6 @@ const Login = () => {
           window.location.href = '/admin'; // Redirect to home page after the alert is closed
         });
       } else {
-        setIsLoggedIn(false);
         swal({
           title: 'Login Failed!',
           text: 'Invalid username or password',

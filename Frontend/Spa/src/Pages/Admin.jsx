@@ -1,6 +1,7 @@
 import React, { useState , useEffect, useCallback} from 'react';
 import { FaTachometerAlt, FaUsers, FaBriefcase, FaCalendarAlt, FaUserFriends, FaUserTie } from 'react-icons/fa';
 import Logo from '../assets/img/Logo.png';
+import swal from 'sweetalert';
 
 const Admin = () => {
   // State to track active tab
@@ -141,14 +142,13 @@ const Admin = () => {
     }
   };
 
-
   // Content components
   const DashboardContent = () => {
-    // State variables for KPIs
     const [revenue, setRevenue] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [appointmentsToday, setAppointmentsToday] = useState([]);
     const [occupancyRate, setOccupancyRate] = useState(0);
     const [averageTreatmentTime, setAverageTreatmentTime] = useState(0);
-    const [bookingTrends, setBookingTrends] = useState([]);
     const [appointmentAvailability, setAppointmentAvailability] = useState([]);
     const [employeePerformance, setEmployeePerformance] = useState([]);
 
@@ -168,6 +168,29 @@ const Admin = () => {
     useEffect(() => {
       fetchRevenue();
     })
+
+    // Define a function to fetch appointments from the server
+    const fetchAppointments = async () => {
+      try {
+        // Make a GET request to the /appointments endpoint
+        const response = await fetch('http://localhost:5000/appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+        const data = await response.json();
+        // Update the bookings state with the fetched appointments
+        setBookings(data.appointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      }
+    };
+
+    // Call the fetchAppointments function when the component mounts
+    useEffect(() => {
+      fetchAppointments();
+      return () => {
+      };
+    }, []);
     
     // Function to fetch data and update state
     const fetchData = async () => {
@@ -176,13 +199,6 @@ const Admin = () => {
       setOccupancyRate(kpiData.occupancyRate);
       setAverageTreatmentTime(kpiData.averageTreatmentTime);
   
-      // Fetch data for appointment scheduling and availability
-      const appointmentData = await fetchAppointmentData();
-      setBookingTrends(appointmentData.bookingTrends);
-      setAppointmentAvailability(appointmentData.appointmentAvailability);
-  
-      // Fetch data for employee performance
-      fetchEmployeeData();
     };
   
     // Mock functions for fetching data (replace with actual API calls)
@@ -191,14 +207,6 @@ const Admin = () => {
       return {
         occupancyRate: 0,
         averageTreatmentTime: 0,
-      };
-    };
-  
-    const fetchAppointmentData = async () => {
-      // Example data fetching logic for appointment scheduling and availability
-      return {
-        bookingTrends: ['Morning', 'Afternoon', 'Evening'],
-        appointmentAvailability: [{ startTime: '9:00 AM', endTime: '10:00 AM' }, { startTime: '10:00 AM', endTime: '11:00 AM' }, { startTime: '11:00 AM', endTime: '12:00 PM' }],
       };
     };
   
@@ -216,11 +224,38 @@ const Admin = () => {
         console.error('Error fetching staffs:', error);
       }
     };
+
+    useEffect(() => {
+      // Fetch data for employee performance
+      fetchEmployeeData();
+    });
+  
   
     // Trigger data fetching on component mount
     useEffect(() => {
       fetchData();
     }, []);
+
+    // function to get the appointments for today
+    const getAppointmentsToday = () => {
+      // Get the current date
+      const currentDate = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD format
+
+      // Filter appointments for today with request_status === 1
+      const todayAppointments = bookings.filter(appointment => {
+        // Extract the date part from the appointment's date_appointed property
+        const appointmentDate = new Date(appointment.date_appointed).toISOString().split('T')[0];
+        // Compare with the current date and check request_status
+        return appointmentDate === currentDate && appointment.request_status === 1;
+      });
+
+      // Set the appointments for today
+      setAppointmentsToday(todayAppointments);
+    };
+
+    useEffect(() => {
+      getAppointmentsToday();
+    }, [bookings]);
 
     // Function to compile tasks for each staff member
     const compileTasks = (employeePerformance) => {
@@ -244,7 +279,15 @@ const Admin = () => {
           {/* Revenue */}
           <div className="bg-white rounded-md shadow-md p-6">
             <h3 className="text-lg font-semibold mb-4">Revenue</h3>
-            <p className="text-4xl font-bold text-center text-blue-500">PHP {revenue}</p>
+            {revenue.length > 0 ? (
+              <p className="text-4xl font-bold text-center text-blue-500">
+                PHP {revenue}
+              </p>
+            ) : (
+              <p className="text-4xl font-bold text-center text-blue-500">
+                PHP 0.00
+              </p>
+            )}            
           </div>
           {/* Occupancy Rate */}
           <div className="bg-white rounded-md shadow-md p-6">
@@ -260,21 +303,26 @@ const Admin = () => {
   
         {/* Appointment Scheduling and Availability */}
         <div className="bg-white rounded-md shadow-md p-6 mt-6">
-          <h3 className="text-lg font-semibold mb-4">Appointment Scheduling and Availability</h3>
           <div className="grid grid-cols-2 gap-6">
-            {/* Appointment Slots */}
+            {/* Appointments Today */}
             <div>
-              <h4 className="text-xl font-semibold mb-2">Available Slots</h4>
+              <h4 className="text-xl font-semibold mb-2">Appointments Today</h4>
               <div className="bg-gray-100 p-4 rounded-md">
                 {/* Display available appointment slots */}
-                {appointmentAvailability.length > 0 ? (
-                  <ul className="divide-y divide-gray-200">
-                    {appointmentAvailability.map((slot, index) => (
-                      <li key={index} className="py-2">{slot.startTime} - {slot.endTime}</li>
-                    ))}
-                  </ul>
+                {appointmentsToday.length > 0 ? (
+                <>
+                  {appointmentsToday.map((appointment, index) => (
+                    <div key={index} >
+                      <ul className="divide-y divide-gray-200">
+                        <li className="py-2">
+                          Name: {appointment.name} - Schedule: {new Date(appointment.date_appointed).toLocaleDateString()} {new Date(appointment.date_appointed).toLocaleTimeString()}
+                        </li>
+                      </ul>
+                    </div>
+                  ))}
+                </>
                 ) : (
-                  <p className="text-gray-500">No available slots</p>
+                  <p className="text-gray-500">No Appointments Today</p>
                 )}
               </div>
             </div>
@@ -284,16 +332,20 @@ const Admin = () => {
         {/* Employee Performance */}
         <div className="bg-white rounded-md shadow-md p-6 mt-6">
           <h3 className="text-lg font-semibold mb-4">Employee Performance</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {compileTasks(employeePerformance).map((employee, index) => (
-              <div key={index} className="bg-white rounded-md shadow-md p-6">
-                <h4 className="text-xl font-semibold mb-2">{employee.name}</h4>
-                <p className="text-gray-700 mb-2">Pending Task: {employee.tasks.reduce((total, task) => total + parseInt(task.pendingTasks), 0)}</p>
-                <p className="text-gray-700 mb-2">Tasks Completed: {employee.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}</p>
-                {/* Add more performance metrics if needed */}
-              </div>
-            ))}
-          </div>
+          {compileTasks(employeePerformance).length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {compileTasks(employeePerformance).map((employee, index) => (
+                <div key={index} className="bg-white rounded-md shadow-md p-6">
+                  <h4 className="text-xl font-semibold mb-2">{employee.name}</h4>
+                  <p className="text-gray-700 mb-2">Pending Task: {employee.tasks.reduce((total, task) => total + parseInt(task.pendingTasks), 0)}</p>
+                  <p className="text-gray-700 mb-2">Tasks Completed: {employee.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}</p>
+                  {/* Add more performance metrics if needed */}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400">No employee performance metrics available.</p>
+          )}
         </div>
       </div>
     );
@@ -351,7 +403,6 @@ const Admin = () => {
     );
   };
   
-
   const UsersContent = () => {
     const [activeTab, setActiveTab] = useState('clients'); // State to track active tab
     const [searchQuery, setSearchQuery] = useState(''); // State to track search query
@@ -394,7 +445,6 @@ const Admin = () => {
       fetchEmployees();
     }, []); // Empty dependency array ensures this effect runs only once, equivalent to componentDidMount
   
-
     // Function to delete a client
     const deleteClient = async (clientId) => {
       try {
@@ -402,11 +452,32 @@ const Admin = () => {
           method: 'DELETE'
         });
         if (response.ok) {
+          swal({
+            title: 'Deleted',
+            text: 'This account is being deleted succesfully',
+            icon: 'success',
+            buttons: false,
+            timer: 1500,
+          });
           setClients(clients.filter(client => client.user_id !== clientId));
         } else {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           console.error('Failed to delete client');
         }
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error deleting client:', error);
       }
     };
@@ -419,11 +490,32 @@ const Admin = () => {
           method: 'DELETE'
         });
         if (response.ok) {
+          swal({
+            title: 'Deleted',
+            text: 'This account is being deleted succesfully',
+            icon: 'success',
+            buttons: false,
+            timer: 1500,
+          });
           setEmployees(employees.filter(employee => employee.employee_id !== employeeId));
         } else {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           console.error('Failed to delete employee');
         }
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error deleting employee:', error);
       }
     };
@@ -480,64 +572,73 @@ const Admin = () => {
 
             {activeTab === 'clients' && (
               <div className="max-h-96 overflow-y-auto">
-                <table className="w-full border-collapse border border-gray-300 text-center bg-light">
-                  <thead className="bg-light">
-                    <tr>
-                      <th className="p-2">ID</th>
-                      <th className="p-2">Name</th>
-                      <th className="p-2">Email</th>
-                      <th className="p-2">Phone</th>
-                      <th className="p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredClients.map((client, index) => {
-                      //console.log("Client:", client);
-                      return (
-                        <tr key={`client_${client.user_id}`} className="hover:bg-gray-100">
-                          <td className="p-2">{client.user_id}</td>
-                          <td className="p-2">{capitalizeEachWord(client.Fname) + " " + capitalizeEachWord(client.Lname)}</td>
-                          <td className="p-2">{client.email}</td>
-                          <td className="p-2">{client.contact}</td>
+                {filteredClients.length > 0 ? (
+                  <table className="w-full border-collapse border border-gray-300 text-center bg-light">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="p-2">ID</th>
+                        <th className="p-2">Name</th>
+                        <th className="p-2">Email</th>
+                        <th className="p-2">Phone</th>
+                        <th className="p-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredClients.map((client, index) => {
+                        //console.log("Client:", client);
+                        return (
+                          <tr key={`client_${client.user_id}`} className="hover:bg-gray-100">
+                            <td className="p-2">{client.user_id}</td>
+                            <td className="p-2">{capitalizeEachWord(client.Fname) + " " + capitalizeEachWord(client.Lname)}</td>
+                            <td className="p-2">{client.email}</td>
+                            <td className="p-2">{client.contact}</td>
+                            <td className="p-2">
+                              <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded" onClick={() => deleteClient(client.user_id)}>Delete</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-gray-500 text-center">No users found.</p>
+                )}
+              </div>
+            )}
+            
+            {activeTab === 'employees' && (
+              <div className="max-h-96 overflow-y-auto">
+                {filteredEmployees.length > 0 ? (
+                  <table className="w-full border-collapse bg-light border border-gray-300 text-center">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="p-2">ID</th>
+                        <th className="p-2">Name</th>
+                        <th className="p-2">Email</th>
+                        <th className="p-2">Phone</th>
+                        <th className="p-2">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredEmployees.map(employee => (
+                        <tr key={`employee_${employee.employee_id}`} className="hover:bg-gray-100">
+                          <td className="p-2">{employee.employee_id}</td>
+                          <td className="p-2">{capitalizeEachWord(employee.Fname) + " " + capitalizeEachWord(employee.Lname)}</td>
+                          <td className="p-2">{employee.email}</td>
+                          <td className="p-2">{employee.contact}</td>
                           <td className="p-2">
-                            <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded" onClick={() => deleteClient(client.user_id)}>Delete</button>
+                            <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded" onClick={() => deleteEmployee(employee.employee_id)}>Delete</button>
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <p className="text-gray-500 text-center">No employees found.</p>
+                )}
               </div>
             )}
 
-            {activeTab === 'employees' && (
-              <div className="max-h-96 overflow-y-auto">
-                <table className="w-full border-collapse bg-light border border-gray-300 text-center">
-                  <thead className="bg-light">
-                    <tr>
-                      <th className="p-2">ID</th>
-                      <th className="p-2">Name</th>
-                      <th className="p-2">Email</th>
-                      <th className="p-2">Phone</th>
-                      <th className="p-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEmployees.map(employee => (
-                      <tr key={`employee_${employee.employee_id}`} className="hover:bg-gray-100">
-                        <td className="p-2">{employee.employee_id}</td>
-                        <td className="p-2">{capitalizeEachWord(employee.Fname) + " " + capitalizeEachWord(employee.Lname)}</td>
-                        <td className="p-2">{employee.email}</td>
-                        <td className="p-2">{employee.phone}</td>
-                        <td className="p-2">
-                          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded" onClick={() => deleteEmployee(employee.employee_id)}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </div>
       </main>
@@ -633,8 +734,23 @@ const Admin = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to add service');
         }
+
+        swal({
+          title: 'Success',
+          text: 'Service added successfully',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
         
         // Clear the file input value to clear the selection
         document.getElementById('imageInput').value = '';
@@ -651,6 +767,13 @@ const Admin = () => {
         // Fetch services data again to update the list
         fetchServices();
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error adding service:', error);
       }
     };
@@ -718,14 +841,36 @@ const Admin = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update service');
         }
+
+        swal({
+          title: 'Success',
+          text: 'Service updated successfully',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
 
         // If the update is successful, close the update modal
         closeUpdateModal();
         // Fetch services data again to update the list
         fetchServices();
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error updating service:', error);
         // Handle errors if necessary
       }
@@ -739,8 +884,23 @@ const Admin = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to delete service');
         }
+
+        swal({
+          title: 'Success',
+          text: 'Service deleted successfully',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
 
         // Update services state to reflect the deletion
         setServices(prevServices => ({
@@ -825,7 +985,7 @@ const Admin = () => {
   
         {/* Service list */}
         <div className="grid-container h-screen" style={{ maxHeight: '630px', overflowY: 'auto' }}>
-          {/* Service list */}
+        {services[activeCategory].length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {services[activeCategory].map(service => (
               <div key={service.service_id} className="bg-white rounded shadow p-4">
@@ -833,13 +993,18 @@ const Admin = () => {
                 <img src={`http://localhost:5000/${service.image_path}`} alt={service.service_name} className="w-full h-40 object-cover mb-4" />
                 <h3 className="text-lg font-semibold mb-2">{service.service_name}</h3>
                 <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                <p className="text-lg font-bold text-primary">{service.price}</p>
+                <p className="text-lg font-bold text-primary">
+                  PHP {service.price.toFixed(2)}
+                </p>
                 <button className='px-4 py-2 m-2 bg-dark text-white rounded hover:bg-dark/90 duration-300' onClick={() => openUpdateModal(service)}>Update</button>
                 <button className='px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 duration-300' onClick={() => deleteService(service.service_id)}>Delete</button>
               </div>
             ))}
           </div>
-        </div>
+        ) : (
+          <p className="text-gray-500 text-center">No services available in this category.</p>
+        )}
+      </div>
   
         {/* Update Service Modal */}
         {selectedService && (
@@ -905,7 +1070,7 @@ const Admin = () => {
       )}
 
       </div>
-      );
+    );
   };
 
   const BookingContent = () => {
@@ -945,6 +1110,8 @@ const Admin = () => {
         const response = await fetch('http://localhost:5000/assigned_employee');
         const data = await response.json();
         if (response.ok) {
+          // Sort the appointments by date
+          data.appointments.sort((a, b) => new Date(a.date_appointed) - new Date(b.date_appointed));
           setAppointmentAccepted(data.appointments);
         } else {
           console.error('Error fetching employees:', data.message);
@@ -1018,16 +1185,45 @@ const Admin = () => {
           });
   
           if (!response.ok) {
+            swal({
+              title: 'Something went wrong',
+              text: 'Please try again',
+              icon: 'error',
+              buttons: false,
+              timer: 1500,
+            });
             throw new Error('Failed to update request status');
           }
+
+          swal({
+            title: 'Success',
+            text: 'Appointment accepted',
+            icon: 'success',
+            buttons: false,
+            timer: 1500,
+          });
   
           // Remove the declined booking from the local state
           setPendingAppointment(pendingAppointment.filter(booking => booking.appointment_id !== bookingId));
         } catch (error) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           console.error('Error declining appointment:', error);
         }
     
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error assigning employee:', error);
       }
       
@@ -1048,18 +1244,42 @@ const Admin = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update request status');
         }
+
+        swal({
+          title: 'Success',
+          text: 'Appointment declined',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
 
         // Remove the declined booking from the local state
         setPendingAppointment(pendingAppointment.filter(booking => booking.appointment_id !== bookingId));
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error declining appointment:', error);
       }
     };
 
     useEffect(() => {
       const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
+      // Sort the pending appointments by date
+      pendingAppointment.sort((a, b) => new Date(a.date_appointed) - new Date(b.date_appointed));
       setPendingAppointment(pendingAppointment);
     }, [bookings]);
 
@@ -1073,33 +1293,41 @@ const Admin = () => {
       <div className="p-8 container mx-auto">
         <h2 className="text-4xl font-bold mb-8 text-gray-800">Pending Appointments</h2>
         <div className="overflow-y-auto max-h-[600px]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {pendingAppointment.map((booking) => (
-              <div key={booking.appointment_id} className="bg-white rounded-md shadow-md p-6">
-                <p className="text-lg font-semibold mb-4">Name: {booking.name}</p>
-                <p className="text-gray-700 mb-2">Email: {booking.email}</p>
-                <p className="text-gray-700 mb-2">Phone: {booking.contact}</p>
-                <p className="text-gray-700 mb-2">Service: {booking.service}</p>
-                <p className="text-gray-700 mb-2">Date: {new Date(booking.date_appointed).toLocaleDateString()}</p>
-                <p className="text-gray-700 mb-2">Time: {new Date(booking.date_appointed).toLocaleTimeString()}</p> 
-                <p className="text-gray-700 mb-2">Message: {booking.message || 'No message'}</p>
-                <div className="flex gap-4">
-                  <button
-                    className="bg-dark hover:bg-dark/90 text-white font-bold py-2 px-4 rounded-full mt-4 mr-2"
-                    onClick={() => handleAccept(booking.appointment_id)}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full mt-4"
-                    onClick={() => handleDeclined(booking.appointment_id)}
-                  >
-                    Declined
-                  </button>
+          {pendingAppointment.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {pendingAppointment.map((booking) => (
+                <div key={booking.appointment_id} className="bg-white rounded-md shadow-md p-6">
+                  <p className="text-lg font-semibold mb-4">Name: {booking.name}</p>
+                  <p className="text-gray-700 mb-2">Email: {booking.email}</p>
+                  <p className="text-gray-700 mb-2">Phone: {booking.contact}</p>
+                  <p className="text-gray-700 mb-2">Service: {booking.service}</p>
+                  <p className="text-gray-700 mb-2">Date: {new Date(booking.date_appointed).toLocaleDateString()}</p>
+                  <p className="text-gray-700 mb-2">Time: {new Date(booking.date_appointed).toLocaleTimeString()}</p> 
+                  <p className="text-gray-700 mb-2">Message: {booking.message || 'No message'}</p>
+                  <div className="flex gap-4">
+                    <button
+                      className="bg-dark hover:bg-dark/90 text-white font-bold py-2 px-4 rounded-full mt-4 mr-2"
+                      onClick={() => handleAccept(booking.appointment_id)}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full mt-4"
+                      onClick={() => handleDeclined(booking.appointment_id)}
+                    >
+                      Declined
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
+          ) : (
+            <p className="text-gray-500 text-center p-10">
+              No pending appointments at the moment.
+            </p>
+          )}
         </div>
         {showModal && (
           <div className="fixed inset-0 flex justify-center items-center">
@@ -1138,13 +1366,12 @@ const Admin = () => {
                   onClick={() => setShowModal(false)}
                 >
                   Close
-                </button>
-                
+                </button>          
               </div>
             </div>
           </div>
         )}
-        <div className="mt-8">
+       <div className="mt-8">
           <h2 className="text-3xl font-bold mb-6 text-gray-800">Confirmed Appointment</h2>
           <div className="overflow-auto max-h-[300px]">
             <table className="table-auto w-full">
@@ -1161,20 +1388,30 @@ const Admin = () => {
                 </tr>
               </thead>
               <tbody className='text-center'>
-                {appointmentAccepted.map((appointment) => (
-                  <tr key={appointment.appointment_id}>
-                    <td className="border px-4 py-2">{appointment.name}</td>
-                    <td className="border px-4 py-2">{appointment.email}</td>
-                    <td className="border px-4 py-2">{appointment.contact}</td>
-                    <td className="border px-4 py-2">{appointment.service}</td>
-                    <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleDateString()}</td>
-                    <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleTimeString()}</td>
-                    <td className="border px-4 py-2">
-                      {appointment.request_status ? 'Accepted' : 'Pending'}
+                {appointmentAccepted.length > 0 ? (
+                  <>
+                    {appointmentAccepted.map((appointment) => (
+                      <tr key={appointment.appointment_id}>
+                        <td className="border px-4 py-2">{appointment.name}</td>
+                        <td className="border px-4 py-2">{appointment.email}</td>
+                        <td className="border px-4 py-2">{appointment.contact}</td>
+                        <td className="border px-4 py-2">{appointment.service}</td>
+                        <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleDateString()}</td>
+                        <td className="border px-4 py-2">{new Date(appointment.date_appointed).toLocaleTimeString()}</td>
+                        <td className="border px-4 py-2">
+                          {appointment.request_status ? 'Accepted' : 'Pending'}
+                        </td>
+                        <td className="border px-4 py-2">{appointment.assignedEmployee}</td>                    
+                      </tr>
+                    ))}
+                  </>
+                ) : (
+                  <tr>
+                    <td colSpan="8" className="text-gray-500 text-center p-20">
+                      Accepted appointments will display here.
                     </td>
-                    <td className="border px-4 py-2">{appointment.assignedEmployee}</td>                    
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -1238,17 +1475,47 @@ const Admin = () => {
         });
         
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update payment status');
         }
 
         // Fetch the updated list of customers after updating the payment status
         const updatedData = await fetch('http://localhost:5000/appointments');
         if (!updatedData.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to fetch updated customers');
         }
+
+        swal({
+          title: 'Paid',
+          text: 'This is mark as paid',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
+
         const updatedCustomersData = await updatedData.json();
         setCustomers(updatedCustomersData.appointments);
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error toggling paid status:', error);
       }
     };
@@ -1256,145 +1523,176 @@ const Admin = () => {
     return (
       <div className="container mx-auto p-8">
         <h2 className="text-3xl font-bold mb-6 text-gray-800">Customer Overview</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto max-h-96">
-          {acceptedAppointment.map((customer) => (
-            <div key={customer.appointment_id} className="bg-white rounded-md shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-4">{customer.name}</h3>
-              <p className="text-gray-700 mb-2">Email: {customer.email}</p>
-              <p className="text-gray-700 mb-2">Phone: {customer.contact}</p>
-              <p className="text-gray-700 mb-2">Service: {customer.service}</p>
-              <p className="text-gray-700 mb-2">Appointment Status: {customer.appointment_status ? 'Done' : 'Ongoing'}</p>
-              <p className="text-gray-700 mb-2">
-                Total Amount to Pay: PHP{customer.price_final ? customer.price_final.toFixed(2) : 'N/A'}
-              </p>
-              <p className="text-gray-700 mb-2">Paid: {customer.payment_status ? 'Yes' : 'No'}</p>
-              {!customer.payment_status && (
-                <button
-                  className="bg-dark hover:bg-dark/90 duration-300 text-white rounded-md px-4 py-2 mr-2"
-                  onClick={() => {
-                    togglePaidStatus(customer.appointment_id);
-                  }}
-                >
-                  Mark as Paid
-                </button>
-              )}
-             
+        {acceptedAppointment.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 overflow-auto max-h-96">
+              {acceptedAppointment.map((customer) => (
+                <div key={customer.appointment_id} className="bg-white rounded-md shadow-md p-6">
+                  <h3 className="text-xl font-semibold mb-4">{customer.name}</h3>
+                  <p className="text-gray-700 mb-2">Email: {customer.email}</p>
+                  <p className="text-gray-700 mb-2">Phone: {customer.contact}</p>
+                  <p className="text-gray-700 mb-2">Service: {customer.service}</p>
+                  <p className="text-gray-700 mb-2">Appointment Status: {customer.appointment_status ? 'Done' : 'Ongoing'}</p>
+                  <p className="text-gray-700 mb-2">
+                    Total Amount to Pay: PHP{customer.price_final ? customer.price_final.toFixed(2) : 'N/A'}
+                  </p>
+                  <p className="text-gray-700 mb-2">Paid: {customer.payment_status ? 'Yes' : 'No'}</p>
+                  {!customer.payment_status && (
+                    <button
+                      className="bg-dark hover:bg-dark/90 duration-300 text-white rounded-md px-4 py-2 mr-2"
+                      onClick={() => {
+                        togglePaidStatus(customer.appointment_id);
+                      }}
+                    >
+                      Mark as Paid
+                    </button>
+                  )}
+                
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        {/* Display paid customers history in a table */}
+          </>
+        ) : (
+          <p className="text-gray-500 text-center p-10">
+            Customer overview will be display here.
+          </p>
+        )}
+       {/* Display paid customers history in a table */}
         <div className="mt-8 overflow-auto max-h-96">
           <h2 className="text-3xl font-bold mb-6 text-gray-800">Paid Customers History</h2>
-          <table className="table-auto w-full">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Email</th>
-                <th className="px-4 py-2">Phone</th>
-                <th className="px-4 py-2">Service</th>
-                <th className="px-4 py-2">Price</th>
-              </tr>
-            </thead>
-            <tbody className='text-center'>
-              {paidCustomersHistory.map((customer) => (
-                <tr key={customer.appointment_id}>
-                  <td className="border px-4 py-2">{customer.name}</td>
-                  <td className="border px-4 py-2">{customer.email}</td>
-                  <td className="border px-4 py-2">{customer.contact}</td>
-                  <td className="border px-4 py-2">{customer.service}</td>
-                  <td className="border px-4 py-2">PHP{customer.price_final.toFixed(2)}</td>
+          {paidCustomersHistory.length > 0 ? (
+            <table className="table-auto w-full">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Email</th>
+                  <th className="px-4 py-2">Phone</th>
+                  <th className="px-4 py-2">Service</th>
+                  <th className="px-4 py-2">Price</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className='text-center'>
+                {paidCustomersHistory.map((customer) => (
+                  <tr key={customer.appointment_id}>
+                    <td className="border px-4 py-2">{customer.name}</td>
+                    <td className="border px-4 py-2">{customer.email}</td>
+                    <td className="border px-4 py-2">{customer.contact}</td>
+                    <td className="border px-4 py-2">{customer.service}</td>
+                    <td className="border px-4 py-2">PHP{customer.price_final.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500 text-center">Paid customer history will display here.</p>
+          )}
         </div>
       </div>
     );
   };
 
- const StaffManagementContent = () => {
-  const [staffMembers, setStaffMembers] = useState([]);
+  const StaffManagementContent = () => {
+    const [staffMembers, setStaffMembers] = useState([]);
 
-  // Define a function to fetch the staff from the Employee from the server
-  const fetchStaffs = async () => {
-    try {
-      // Make a GET request to the /employee endpoint
-      const response = await fetch('http://localhost:5000/staffs');
-      if (!response.ok) {
-        throw new Error('Failed to fetch staffs');
+    // Define a function to fetch the staff from the Employee from the server
+    const fetchStaffs = async () => {
+      try {
+        // Make a GET request to the /employee endpoint
+        const response = await fetch('http://localhost:5000/staffs');
+        if (!response.ok) {
+          throw new Error('Failed to fetch staffs');
+        }
+        const data = await response.json();
+        // Update the staffs state with the fetched employee
+        setStaffMembers(data.staffs);
+      } catch (error) {
+        console.error('Error fetching staffs:', error);
       }
-      const data = await response.json();
-      // Update the staffs state with the fetched employee
-      setStaffMembers(data.staffs);
-    } catch (error) {
-      console.error('Error fetching staffs:', error);
-    }
-  };
-
-  useEffect(()  => {
-    // Call the fetchEmployees function when the component mounts
-    fetchStaffs();
-    return () => {
-      //perform any clean-up if needed
     };
-  }, []);
 
-  // Function to compile tasks for each staff member
-  const compileTasks = (employeePerformance) => {
-    const compiledTasks = {};
-    employeePerformance.forEach((staff) => {
-      const { name, task, completedTasks, pendingTasks } = staff;
-      if (!compiledTasks[name]) {
-        compiledTasks[name] = { name, tasks: [{ task, completedTasks, pendingTasks }] };
-      } else {
-        compiledTasks[name].tasks.push({ task, completedTasks, pendingTasks });
-      }
-    });
-    return Object.values(compiledTasks);
-  };
+    useEffect(()  => {
+      // Call the fetchEmployees function when the component mounts
+      fetchStaffs();
+      return () => {
+        //perform any clean-up if needed
+      };
+    }, []);
 
-  return (
-    <div className="container mx-auto p-8">
-      <h2 className="text-3xl font-bold mb-6 text-gray-800">Staff Overview</h2>
-      <div className="overflow-auto max-h-96">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {compileTasks(staffMembers).map((staff, index) => (
-            <div key={index} className="bg-white rounded-md shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-4">{staff.name}</h3>
-              <div className="mb-2">
-                <table className="table-auto w-full">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2">Assigned Tasks</th>
-                      <th className="px-4 py-2">Completed Tasks</th>
-                    </tr>
-                  </thead>
-                  <tbody className='text-center'>
-                    {staff.tasks.map((task, index) => (
-                      <tr key={index}>
-                        <td className="border px-4 py-2">{task.task}</td>
-                        <td className="border px-4 py-2">{task.completedTasks}</td>
-                      </tr>
-                    ))}
-                    {/* Total row */}
-                    <tr>
-                      <td className="border px-4 py-2 font-semibold">Total</td>
-                      <td className="border px-4 py-2 font-semibold">
-                        {staff.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+    // Function to compile tasks for each staff member
+    const compileTasks = (employeePerformance) => {
+      const compiledTasks = {};
+      employeePerformance.forEach((staff) => {
+        const { name, task, completedTasks, pendingTasks } = staff;
+        if (!compiledTasks[name]) {
+          compiledTasks[name] = { name, tasks: [{ task, completedTasks, pendingTasks }] };
+        } else {
+          compiledTasks[name].tasks.push({ task, completedTasks, pendingTasks });
+        }
+      });
+      return Object.values(compiledTasks);
+    };
+
+    return (
+      <div className="container mx-auto p-8">
+        <h2 className="text-3xl font-bold mb-6 text-gray-800">Staff Overview</h2>
+        <div className="overflow-auto max-h-96">
+          {compileTasks(staffMembers).length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {compileTasks(staffMembers).map((staff, index) => (
+                <div key={index} className="bg-white rounded-md shadow-md p-6">
+                  <h3 className="text-xl font-semibold mb-4">{staff.name}</h3>
+                  <div className="mb-2">
+                    <table className="table-auto w-full">
+                      <thead>
+                        <tr>
+                          <th className="px-4 py-2">Assigned Tasks</th>
+                          <th className="px-4 py-2">Pending Tasks</th>
+                          <th className="px-4 py-2">Completed Tasks</th>
+                        </tr>
+                      </thead>
+                      <tbody className='text-center'>
+                        {staff.tasks.map((task, index) => (
+                          <tr key={index}>
+                            <td className="border px-4 py-2">
+                              {task.task ? task.task : "None"}
+                            </td>
+                            <td className="border px-4 py-2">
+                              {task.pendingTasks}
+                            </td>
+                            <td className="border px-4 py-2">
+                              {task.completedTasks}
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Total row */}
+                        <tr>
+                          <td className="border px-4 py-2 font-semibold">
+                            Total
+                          </td>
+                          <td className="border px-4 py-2 font-semibold">
+                            {staff.tasks.reduce((total, task) => total + parseInt(task.pendingTasks), 0)}
+                          </td>
+                          <td className="border px-4 py-2 font-semibold">
+                            {staff.tasks.reduce((total, task) => total + parseInt(task.completedTasks), 0)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <p className="text-gray-500 text-center">No staff overview available.</p>
+          )}
         </div>
+
       </div>
-    </div>
-  );
-};
+    );
+  };
+    
   // Function to render content based on active tab...
-  
+    
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':

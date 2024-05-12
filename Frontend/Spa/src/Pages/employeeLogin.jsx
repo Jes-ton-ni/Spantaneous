@@ -56,7 +56,6 @@ const Login = () => {
       });
       const data = await response.json();
       if (data.success) {
-        setIsLoggedIn(true);
         swal({
           title: 'Login Successful!',
           text: ' ',
@@ -64,10 +63,9 @@ const Login = () => {
           buttons: false,
           timer: 1500,
         }).then(() => {         
-          window.location.href = '/'; // Redirect to home page after the alert is closed
+          window.location.href = '/Employee'; // Redirect to home page after the alert is closed
         });
       } else {
-        setIsLoggedIn(false);
         swal({
           title: 'Login Failed!',
           text: 'Invalid username or password',
@@ -104,7 +102,6 @@ const Login = () => {
       const data = await response.json();
       console.log(data);
       if(data.success){
-        setIsLoggedIn(true);
         swal({
           title: 'Signup Successful!',
           text: ' ',
@@ -112,7 +109,7 @@ const Login = () => {
           buttons: false,
           timer: 1500,
         }).then(() => {          
-          window.location.href = '/Employee'; // Redirect to home page after the alert is closed
+          window.location.href = '/Employeelogin'; // Redirect to home page after the alert is closed
         });
       }
       else{

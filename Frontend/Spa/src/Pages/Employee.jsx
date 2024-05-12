@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback} from 'react';
 import { FaUserAlt, FaCalendarAlt, FaTasks } from 'react-icons/fa';
 import Logo from '../assets/img/Logo.png';
+import swal from 'sweetalert';
 
 const Employee = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -432,7 +433,8 @@ const Employee = () => {
 
     useEffect(() => {
       const pendingAppointment = appointments.filter(appointment => appointment.request_status === 0  );
-      //const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
+      // Sort the pending appointments by date
+      pendingAppointment.sort((a, b) => new Date(a.date_appointed) - new Date(b.date_appointed));
       setPendingAppointment(pendingAppointment);
      // setAppointmentAccepted(acceptedAppointment);
     }, [appointments]);
@@ -490,9 +492,24 @@ const Employee = () => {
           });
   
           if (!response.ok) {
+            swal({
+              title: 'Something went wrong',
+              text: 'Please try again',
+              icon: 'error',
+              buttons: false,
+              timer: 1500,
+            });
             throw new Error('Failed to update request status');
           }
-  
+
+          swal({
+            title: 'Accepted',
+            text: 'This appointment is being accepted',
+            icon: 'success',
+            buttons: false,
+            timer: 1500,
+          });
+          
           // Remove the declined booking from the local state
           setPendingAppointment(pendingAppointment.filter(appointment => appointment.appointment_id !== appointmentId));
         } catch (error) {
@@ -516,8 +533,23 @@ const Employee = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update request status');
         }
+
+        swal({
+          title: 'Declined',
+          text: 'This appointment is being declined',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
 
         // Remove the declined booking from the local state
         setPendingAppointment(pendingAppointment.filter(appointment => appointment.appointment_id !== appointmentId));
@@ -529,35 +561,39 @@ const Employee = () => {
     return (
       <div className='container mx-auto'>
         <h2 className='text-4xl font-semibold text-center mb-9'>Appointments</h2>
-        <div className='flex items-center justify-center'>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-screen overflow-y-auto">
-            {pendingAppointment.map((appointment, index) => (
-              <div key={index} className="p-4 border rounded-lg shadow-md bg-light">
-                <h3 className="text-lg font-bold mb-2">Appointment {index + 1}</h3>
-                <p><span className="font-medium">Name:</span> {appointment.name}</p>
-                <p><span className="font-medium">Email:</span> {appointment.email}</p>
-                <p><span className="font-medium">Phone:</span> {appointment.contact}</p>
-                <p><span className="font-medium">Service:</span> {appointment.service}</p>
-                <p><span className="font-medium">Date:</span> {new Date(appointment.date_appointed).toLocaleDateString()}</p>
-                <p><span className="font-medium">Time:</span> {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
-                <p><span className="font-medium">Message:</span> {appointment.message || 'No message'}</p>
-                <div className=' flex gap-4 '> 
-                <button 
-                  className="mt-4 px-4 py-2 bg-dark text-white rounded-md hover:bg-dark/90 duration-300 "
-                  onClick={() => handleAccept(appointment.appointment_id)}
-                >
-                  Accept
-                </button>
-                <button 
-                  className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-800 duration-300 text-end "
-                  onClick={() => handleDeclined(appointment.appointment_id)}
-                >
-                  Decline
-                </button>
+        <div className='overflow-y-auto max-h-[600px]'>
+          {pendingAppointment.length > 0 ? (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-screen overflow-y-auto">
+              {pendingAppointment.map((appointment, index) => (
+                <div key={index} className="p-4 border rounded-lg shadow-md bg-light">
+                  <h3 className="text-lg font-bold mb-2">Appointment {index + 1}</h3>
+                  <p><span className="font-medium">Name:</span> {appointment.name}</p>
+                  <p><span className="font-medium">Email:</span> {appointment.email}</p>
+                  <p><span className="font-medium">Phone:</span> {appointment.contact}</p>
+                  <p><span className="font-medium">Service:</span> {appointment.service}</p>
+                  <p><span className="font-medium">Date:</span> {new Date(appointment.date_appointed).toLocaleDateString()}</p>
+                  <p><span className="font-medium">Time:</span> {new Date(appointment.date_appointed).toLocaleTimeString()}</p>
+                  <p><span className="font-medium">Message:</span> {appointment.message || 'No message'}</p>
+                  <div className='flex gap-4 mt-4'> 
+                    <button 
+                      className="px-4 py-2 bg-dark text-white rounded-md hover:bg-dark/90 duration-300 "
+                      onClick={() => handleAccept(appointment.appointment_id)}
+                    >
+                      Accept
+                    </button>
+                    <button 
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-800 duration-300 text-end "
+                      onClick={() => handleDeclined(appointment.appointment_id)}
+                    >
+                      Decline
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-gray-500">No pending appointments</p>
+          )}
         </div>
       </div>
     );
@@ -666,8 +702,23 @@ const Employee = () => {
         });
 
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update request status');
         }
+
+        swal({
+          title: 'Completed',
+          text: 'This tasks is mark completed',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
 
         fetchTask();
       } catch (error) {
@@ -703,6 +754,13 @@ const Employee = () => {
         });
         
         if (!response.ok) {
+          swal({
+            title: 'Something went wrong',
+            text: 'Please try again',
+            icon: 'error',
+            buttons: false,
+            timer: 1500,
+          });
           throw new Error('Failed to update payment status');
         }
     
@@ -717,10 +775,25 @@ const Employee = () => {
         } else {
           console.error('Error fetching updated completed tasks:', updatedData.message);
         }
+
+        swal({
+          title: 'Paid',
+          text: 'This task is mark as paid',
+          icon: 'success',
+          buttons: false,
+          timer: 1500,
+        });
     
         setShowModal(false);
     
       } catch (error) {
+        swal({
+          title: 'Something went wrong',
+          text: 'Please try again',
+          icon: 'error',
+          buttons: false,
+          timer: 1500,
+        });
         console.error('Error toggling paid status:', error);
       }
     };
@@ -732,21 +805,25 @@ const Employee = () => {
   
         <div className="mb-8">
           <h3 className="text-xl font-semibold mb-4">Pending Tasks</h3>
-          {pendingTasks.map(task => (
-            <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
-              <p className="text-lg font-semibold">{task.name}</p>
-              <p className="text-gray-600">{task.service}</p>
-              <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
-              <button
-                onClick={() => markAsCompleted(task.appointment_id)}
-                className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
-              >
-                Mark as Completed
-              </button>
-            </div>
-          ))}
+          {pendingTasks.length > 0 ? (
+            pendingTasks.map(task => (
+              <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
+                <p className="text-lg font-semibold">{task.name}</p>
+                <p className="text-gray-600">{task.service}</p>
+                <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
+                <button
+                  onClick={() => markAsCompleted(task.appointment_id)}
+                  className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
+                >
+                  Mark as Completed
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500">No pending tasks</p>
+          )}
         </div>
-  
+
         <div>
           <h3 className="text-xl font-semibold mb-4">Completed Tasks</h3>
           <div className="flex items-center mb-4">
@@ -775,25 +852,30 @@ const Employee = () => {
               ))}
             </select>
           </div>
-          {filteredCompletedTasks.map(task => (
-            <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
-              <p className="text-lg font-semibold">{task.name}</p>
-              <p className="text-gray-600">{task.service}</p>
-              <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
-              {task.payment_status ? (
-                <div>
-                  <p>Paid</p>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => openPaymentModal(task.appointment_id)}
-                  className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
-                >
-                  Mark as Paid
-                </button>
-              )}
-            </div>
-          ))}
+          {filteredCompletedTasks.length > 0 ? (
+            filteredCompletedTasks.map(task => (
+              <div key={task.appointment_id} className="bg-white shadow-md rounded-md p-6 mb-4">
+                <p className="text-lg font-semibold">{task.name}</p>
+                <p className="text-gray-600">{task.service}</p>
+                <p>{new Date(task.date_appointed).toLocaleDateString()}, {new Date(task.date_appointed).toLocaleTimeString()}</p>
+                {task.payment_status ? (
+                  <div>
+                    <p>Paid</p>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => openPaymentModal(task.appointment_id)}
+                    className="px-4 py-2 mt-4 rounded-md text-white bg-dark hover:bg-dark/90 duration-300"
+                  >
+                    Mark as Paid
+                  </button>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-gray-500">No completed tasks</p>
+          )}
+
         </div>
   
         {showModal && (
