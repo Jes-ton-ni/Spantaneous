@@ -826,6 +826,9 @@ app.post('/services', upload.single('image'), (req, res) => {
   // Extract service data from request body
   const { service_name, description, price, category, image, image_path } = req.body;
 
+  if (service_name === '' || description === '' ||  description === '' ||  category === ''){
+    return res.status(500).json({ success: false, message: 'No field should not be empty.' });
+  }
   // Insert service data into the database
   const sql = 'INSERT INTO services (service_name, description, price, category, image, image_path) VALUES (?, ?, ?, ?, ?, ?)';
   connection.query(sql, [service_name, description, price, category, image, image_path], (err, results) => {

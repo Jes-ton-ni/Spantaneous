@@ -147,11 +147,9 @@ const Admin = () => {
     const [revenue, setRevenue] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [pendingAppointment, setPendingAppointment] = useState([]);
+    const [acceptedAppointment, setAcceptedAppointment] = useState([]);
     const [completedAppointment, setCompletedAppointment] = useState([]);
     const [appointmentsToday, setAppointmentsToday] = useState([]);
-    const [occupancyRate, setOccupancyRate] = useState(0);
-    const [averageTreatmentTime, setAverageTreatmentTime] = useState(0);
-    const [appointmentAvailability, setAppointmentAvailability] = useState([]);
     const [employees, setEmployees] = useState([]); // State to store employees fetched from the database
     const [employeePerformance, setEmployeePerformance] = useState([]);
     const [users, setUsers] = useState([]); // State to store users fetched from the database
@@ -208,7 +206,9 @@ const Admin = () => {
     useEffect(() => {
       const pendingAppointment = bookings.filter(booking => booking.request_status === 0);
       setPendingAppointment(pendingAppointment);
-      const completedAppointment = bookings.filter(booking => booking.request_status === 1);
+      const acceptedAppointment = bookings.filter(booking => booking.request_status === 1);
+      setAcceptedAppointment(acceptedAppointment);
+      const completedAppointment = bookings.filter(booking => booking.appointment_status === 1);
       setCompletedAppointment(completedAppointment);
     }, [bookings]);
     
@@ -260,12 +260,12 @@ const Admin = () => {
     // function to get the appointments for today
     const getAppointmentsToday = () => {
       // Get the current date
-      const currentDate = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD format
+      const currentDate = new Date().toDateString();
 
       // Filter appointments for today with request_status === 1
       const todayAppointments = bookings.filter(appointment => {
         // Extract the date part from the appointment's date_appointed property
-        const appointmentDate = new Date(appointment.date_appointed).toISOString().split('T')[0];
+        const appointmentDate = new Date(appointment.date_appointed).toDateString();
         // Compare with the current date and check request_status
         return appointmentDate === currentDate && appointment.request_status === 1;
       });
@@ -390,12 +390,24 @@ const Admin = () => {
             <p className="text-4xl font-bold text-center text-blue-500">{pendingAppointment.length}</p>
           </div>
           <div className="bg-white rounded-md shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">No. Employee</h3>
-            <p className="text-4xl font-bold text-center text-green-500">{employees.length}</p>
+            <h3 className="text-lg font-semibold mb-4">Accepted Appointments</h3>
+            <p className="text-4xl font-bold text-center text-green-500">{acceptedAppointment.length}</p>
           </div>
           <div className="bg-white rounded-md shadow-md p-6">
-            <h3 className="text-lg font-semibold mb-4">No. Users</h3>
-            <p className="text-4xl font-bold text-center text-purple-500">{users.length}</p>
+            <h3 className="text-lg font-semibold mb-4">Total Appointments</h3>
+            <p className="text-4xl font-bold text-center text-purple-500">{bookings.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">No. Employee accounts</h3>
+            <p className="text-4xl font-bold text-center text-blue-500">{employees.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">No. User accounts</h3>
+            <p className="text-4xl font-bold text-center text-green-500">{users.length}</p>
+          </div>
+          <div className="bg-white rounded-md shadow-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Total No. of Users</h3>
+            <p className="text-4xl font-bold text-center text-purple-500">{employees.length + users.length}</p>
           </div>
         </div>
   
@@ -835,7 +847,7 @@ const Admin = () => {
         if (!response.ok) {
           swal({
             title: 'Something went wrong',
-            text: 'Please try again',
+            text: 'Field with * is required',
             icon: 'error',
             buttons: false,
             timer: 1500,
@@ -845,7 +857,7 @@ const Admin = () => {
 
         swal({
           title: 'Success',
-          text: 'Service added successfully',
+          text: 'New service added successfully',
           icon: 'success',
           buttons: false,
           timer: 1500,
@@ -868,7 +880,7 @@ const Admin = () => {
       } catch (error) {
         swal({
           title: 'Something went wrong',
-          text: 'Please try again',
+          text: 'Field with * is required',
           icon: 'error',
           buttons: false,
           timer: 1500,
@@ -1033,6 +1045,8 @@ const Admin = () => {
         {/* New service form */}
         <form className="mb-8">
           {/* Form fields for new service */}
+          
+          <span style={{ color: 'red' }}>*</span>
           <input
             type="text"
             name="service_name"
@@ -1041,6 +1055,7 @@ const Admin = () => {
             placeholder="Service Name"
             className="px-4 py-2 border rounded mr-2"
           />
+          <span style={{ color: 'red' }}>*</span>
           <input
             type="text"
             name="description"
@@ -1049,6 +1064,7 @@ const Admin = () => {
             placeholder="Description"
             className="px-4 py-2 border rounded mr-2"
           />
+          <span style={{ color: 'red' }}>*</span>
           <input
             type="text"
             name="price"
@@ -1057,13 +1073,15 @@ const Admin = () => {
             placeholder="Price"
             className="px-4 py-2 border rounded mr-2"
           />
+          <span style={{ color: 'red' }}>*</span>
           <select
             name="category"
             value={newService.category}
             onChange={handleChange}
+            required
             className="px-4 py-2 border rounded mr-2"
           >
-            <option value="" disabled>Select category</option>
+            <option value='' disabled>Select category</option>
             <option value="Massage">Massage</option>
             <option value="Facial">Facial</option>
             <option value="Nail Treatment">Nail Treatment</option>

@@ -769,9 +769,7 @@ const Employee = () => {
         const updatedData = await updatedResponse.json();
     
         if (updatedResponse.ok) {
-          // Filter the completed tasks from the updated data
-          const updatedCompletedTasks = updatedData.appointments.filter(task => task.appointment_status === 1);
-          setCompletedTasks(updatedCompletedTasks);
+          fetchTask();
         } else {
           console.error('Error fetching updated completed tasks:', updatedData.message);
         }
